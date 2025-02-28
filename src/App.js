@@ -39,17 +39,44 @@ function App() {
       <br/>
       <h1>Bienvenido a RTH</h1>        
       <Productos
-      nombreproducto='camisa'
-      descripcionproducto='camisa de tela transpirante'
-      precioproducto='$50.000'
+        nombreproducto='camisa'
+        descripcionproducto='camisa de tela transpirante'
+        precioproducto='$50.000'
 
-      nombreproducto2='pantalon'
-      descripcionproducto2='jean azul'
-      precioproducto2='$45.000'
+        nombreproducto2='pantalon'
+        descripcionproducto2='jean azul'
+        precioproducto2='$45.000'
 
-      nombreproducto3='zapatos'
-      descripcionproducto3='cuero de culebra'
-      precioproducto3='$60.000'
+        nombreproducto3='zapatos'
+        descripcionproducto3='cuero de culebra'
+        precioproducto3='$60.000'
+      />
+
+      <Productos
+        nombreproducto='camisa'
+        descripcionproducto='camisa de tela transpirante'
+        precioproducto='$50.000'
+
+        nombreproducto2='pantalon'
+        descripcionproducto2='jean azul'
+        precioproducto2='$45.000'
+
+        nombreproducto3='zapatos'
+        descripcionproducto3='cuero de culebra'
+        precioproducto3='$60.000'
+      />
+      <Productos
+        nombreproducto='camisa'
+        descripcionproducto='camisa de tela transpirante'
+        precioproducto='$50.000'
+
+        nombreproducto2='pantalon'
+        descripcionproducto2='jean azul'
+        precioproducto2='$45.000'
+
+        nombreproducto3='zapatos'
+        descripcionproducto3='cuero de culebra'
+        precioproducto3='$60.000'
       />
       <footer>
         <div class="footer-container">
