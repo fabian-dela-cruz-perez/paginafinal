@@ -1,0 +1,172 @@
+/* Contenedor principal */
+.search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* Formulario de búsqueda */
+  .search-form {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  
+  /* Input de búsqueda */
+  .search-input {
+    width: 100%;
+    padding: 12px 48px 12px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: white;
+    color: #333;
+  }
+  
+  /* Estilo cuando el input está enfocado */
+  .search-input:focus {
+    outline: none;
+    border-color: #ff4d2d; /* Color naranja de Temu */
+    box-shadow: 0 0 0 4px rgba(255, 77, 45, 0.1);
+  }
+  
+  /* Estilo del placeholder */
+  .search-input::placeholder {
+    color: #999;
+    opacity: 1;
+  }
+  
+  /* Botón de búsqueda */
+  .search-button {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #666;
+    transition: color 0.3s ease;
+  }
+  
+  /* Efecto hover del botón */
+  .search-button:hover {
+    color: #ff4d2d;
+  }
+  
+  /* Contenedor de sugerencias */
+  .search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 8px;
+    z-index: 1000;
+    border: 1px solid #e0e0e0;
+  }
+  
+  /* Elementos de sugerencias */
+  .suggestion-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  /* Efecto hover en las sugerencias */
+  .suggestion-item:hover {
+    background-color: #f5f5f5;
+  }
+  
+  /* Bordes redondeados para primera y última sugerencia */
+  .suggestion-item:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+  
+  .suggestion-item:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  
+  /* Separador entre sugerencias */
+  .suggestion-item:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  /* Estilos para el icono dentro del botón */
+  .search-button svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Diseño responsive */
+  @media (max-width: 768px) {
+    .search-wrapper {
+      max-width: 100%;
+    }
+    
+    .search-input {
+      font-size: 14px;
+      padding: 10px 40px 10px 16px;
+    }
+    
+    .suggestion-item {
+      padding: 10px 16px;
+    }
+  }
+  
+  /* Animación suave para las sugerencias */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .search-suggestions {
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  /* Estilo para cuando la barra está activa/enfocada */
+  .search-form:focus-within {
+    z-index: 1001;
+  }
+  
+  /* Estilo para el texto dentro de las sugerencias */
+  .suggestion-item {
+    font-size: 14px;
+    color: #333;
+  }
+  
+  /* Estilo para resaltar texto coincidente en sugerencias */
+  .suggestion-match {
+    color: #ff4d2d;
+    font-weight: 500;
+  }
+  
+  /* Efecto de hover mejorado para el botón */
+  .search-button:hover svg {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+  }
+  
+  /* Estilo para estado disabled */
+  .search-input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+  
+  .search-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }

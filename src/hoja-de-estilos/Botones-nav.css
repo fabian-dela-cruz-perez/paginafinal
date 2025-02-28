@@ -1,0 +1,16 @@
+.estilos-botones{
+  display: flex;
+  align-items: center; /* Centra el ícono y el texto verticalmente */
+  background-color: transparent; /* Fondo transparente */
+  border: none; /* Sin borde */
+  color: white; /* Color del texto blanco */
+  font-size: 16px; /* Tamaño del texto */
+  margin: 0 10px; /* Espacio entre botones */
+  cursor: pointer; /* Cambia el cursor al pasar el mouse */
+  text-decoration: none; /* Sin subrayado */
+  transition: color 0.3s ease; /* Transición suave para hover */
+}
+
+.estilo-boton:hover {
+  color: #ffe6e6; /* Color más claro en hover */
+}

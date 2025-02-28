@@ -1,0 +1,12 @@
+.Logo {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    margin-right: auto ;
+}
+
+.Logo span {
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
