@@ -1,13 +1,18 @@
 import React from "react";
-import '../hoja-de-estilos/Botones-nav.css'
+import PropTypes from "prop-types";
 
-function Boton ({texto}){
-  return(
-    <button
-    className='estilos-botones'>
+const Boton = ({ texto, icono }) => {
+  return (
+    <button className="boton-con-icono">
+      <i className={`fas ${icono}`} style={{ marginRight: "10px" }}></i>
       {texto}
     </button>
-    )
-}
+  );
+};
+
+Boton.propTypes = {
+  texto: PropTypes.string.isRequired,
+  icono: PropTypes.string, // Nombre del icono de FontAwesome
+};
 
 export default Boton;

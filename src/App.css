@@ -1,3 +1,4 @@
+
 * {
   margin: 0 auto;
   padding: 0;
@@ -193,3 +194,61 @@ footer {
   color: #ccc;
 }
 
+
+.boton-con-icono {
+  background-color: transparent; /* Fondo transparente para que combine con el nav */
+  border: none; /* Sin borde */
+  color: white; /* Color blanco para el texto e iconos */
+  font-size: 1.2rem; /* Tamaño del texto */
+  padding: 10px 20px; /* Espaciado interno para los botones */
+  cursor: pointer; /* Cambiar cursor a pointer */
+  display: flex; /* Alinear el icono y el texto en línea */
+  align-items: center; /* Centrar verticalmente el contenido */
+  text-transform: uppercase; /* Texto en mayúsculas */
+}
+
+.boton-con-icono i {
+  margin-right: 8px; /* Espacio entre el icono y el texto */
+}
+
+.boton-con-icono:hover {
+  background-color: rgba(255, 255, 255, 0.2); /* Efecto hover con fondo blanco semi-transparente */
+  border-radius: 8px; /* Bordes redondeados */
+}
+
+
+/* Estilo para el menú desplegable */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
+
+/* Mostrar el contenido cuando el menú está abierto */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Opcional: Para abrir el menú también cuando se haga clic en el botón */
+.dropdown .boton-con-icono:hover + .dropdown-content {
+  display: block;
+}
