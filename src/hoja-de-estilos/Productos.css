@@ -1,56 +1,50 @@
-/* Contenedor de productos */
 .product-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
 
-    padding: 20px;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  }
-  
-  /* Tarjeta de producto */
-  .product-card {
-    width: 250px; /* Ancho fijo para las tarjetas */
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    text-align: center;
-    background-color: white;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .product-card:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  /* Imagen del producto */
-  .product-image {
-    width: 100%;
-    height: 200px;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
-  
-  /* Título del producto */
-  .product-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #333;
-  }
-  
-  /* Descripción del producto */
-  .product-description {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 16px;
-  }
-  
-  /* Precio del producto */
-  .product-price {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-  }
-  
+.product-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px;
+  width: 250px; /* Ajusta el ancho si es necesario */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Para alinear el contenido internamente */
+}
+
+
+.product-title {
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+.product-description {
+  color: #666;
+  margin: 8px 0;
+}
+
+.product-price {
+  font-weight: bold;
+  color: #333;
+}
+
+
+.product-image {
+  width: 100%;        
+  height: auto;       /* Ajustar automáticamente la altura */
+  border-radius: 8px;
+  object-fit: contain; /* La imagen se ajusta dentro sin cortarse */
+}
+
+
+.productos-container {
+  display: flex;
+  justify-content: space-around; /* Para que haya espacio entre los productos */
+  align-items: stretch; /* Asegura que todos los productos tengan la misma altura */
+  gap: 16px; /* Espacio entre los productos */
+  flex-wrap: wrap; /* Para que los productos se ajusten en diferentes filas si es necesario */
+}

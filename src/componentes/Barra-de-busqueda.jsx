@@ -5,7 +5,7 @@ function SimpleSearchBar({ onSearch }) {
 
   const handleInputChange = (e) => {
     setSearchValue(e.target.value);
-    onSearch(e.target.value); // Llama a la función onSearch cada vez que cambia el valor
+    onSearch(e.target.value);
   };
 
   return (

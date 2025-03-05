@@ -2,8 +2,12 @@ import "./App.css";
 import "./hoja-de-estilos/Logo.css";
 import SimpleSearchBar from "./componentes/Barra-de-busqueda";
 import "./hoja-de-estilos/Barra-de-busqueda.css";
-import Productos from "./componentes/Productos.js";
+import Productos from "../src/componentes/Productos";
 import { useState } from "react";
+import conjuntocalamar from "../src/imagenes/conjuto del juego del calamar.jpg";
+import conjuntocapucha from "../src/imagenes/Conjunto capucha de manga larga con estampado de estrellas y letras de Super Windom.jpg";
+import gorra from "../src/imagenes/gorra.jpg"
+
 
 function App() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -37,17 +41,15 @@ function App() {
               <i className="fas fa-home"></i> Inicio
             </button>
 
-            {/* Botón de catálogo con opciones desplegables */}
             <div className="dropdown">
   <button className="boton-con-icono" onClick={toggleDropdown}>
     <i className="fas fa-tags"></i> Catálogo
   </button>
   {dropdownOpen && (
     <div className="dropdown-content">
-      <button>Ropa</button>
-      <button>Calzado</button>
+      <button>Conjuntos</button>
+      <button>Gorras</button>
       <button>Accesorios</button>
-      <button>Ofertas</button>
     </div>
   )}
 </div>
@@ -70,34 +72,58 @@ function App() {
       </h2>
       <br />
 
+
       <div className="ajustar">
         <h1>Bienvenido a RTH</h1>
       </div>
 
+      <div className="Productos-container">
       <Productos
-        nombreproducto="camisa"
-        descripcionproducto="camisa de tela transpirante"
+        imagenproducto={conjuntocalamar}
+        nombreproducto="Conjunto del juego del calamar"
+        descripcionproducto="Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar."
         precioproducto="$50.000"
-        nombreproducto2="pantalon"
-        descripcionproducto2="jean azul"
+        imagenproducto2={conjuntocapucha}
+        nombreproducto2="Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom"
+        descripcionproducto2="Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día."
         precioproducto2="$45.000"
-        nombreproducto3="zapatos"
-        descripcionproducto3="cuero de culebra"
+        imagenproducto3={gorra}
+        nombreproducto3="Gorra"
+        descripcionproducto3="Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión."
         precioproducto3="$60.000"
         searchTerm={searchTerm}
       />
         <Productos
-        nombreproducto="camisa"
-        descripcionproducto="camisa de tela transpirante"
-        precioproducto="$50.000"
-        nombreproducto2="pantalon"
-        descripcionproducto2="jean azul"
-        precioproducto2="$45.000"
-        nombreproducto3="zapatos"
-        descripcionproducto3="cuero de culebra"
-        precioproducto3="$60.000"
+        imagenproducto={''}
+        nombreproducto='titulo'
+        descripcionproducto="descripcion"
+        precioproducto="precio"
+        imagenproducto2={''}
+        nombreproducto2='titulo'
+        descripcionproducto2="descripcion"
+        precioproducto2="precio"
+        imagenproducto3={''}
+        nombreproducto3='titulo'
+        descripcionproducto3="descripcion"
+        precioproducto3="precio"
         searchTerm={searchTerm}
       />
+        <Productos
+        imagenproducto={''}
+        nombreproducto='titulo'
+        descripcionproducto="descripcion"
+        precioproducto="precio"
+        imagenproducto2={''}
+        nombreproducto2='titulo'
+        descripcionproducto2="descripcion"
+        precioproducto2="precio"
+        imagenproducto3={''}
+        nombreproducto3='titulo'
+        descripcionproducto3="descripcion"
+        precioproducto3="precio"
+        searchTerm={searchTerm}
+      />
+      </div>
       
       <footer>
         <div className="footer-container">
