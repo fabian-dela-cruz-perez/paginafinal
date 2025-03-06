@@ -3,6 +3,7 @@ import "./hoja-de-estilos/Logo.css";
 import SimpleSearchBar from "./componentes/Barra-de-busqueda";
 import "./hoja-de-estilos/Barra-de-busqueda.css";
 import Productos from "../src/componentes/Productos";
+import LoginRegistro from "./componentes/LoginRegistro"; // Importar el componente de login/registro
 import { useState } from "react";
 import conjuntocalamar from "../src/imagenes/conjuto del juego del calamar.jpg";
 import conjuntocapucha from "../src/imagenes/Conjunto capucha de manga larga con estampado de estrellas y letras de Super Windom.jpg";
@@ -13,6 +14,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [carrito, setCarrito] = useState([]);
   const [mostrarCarrito, setMostrarCarrito] = useState(false); // Estado para mostrar el carrito
+  const [mostrarLogin, setMostrarLogin] = useState(false); // Estado para mostrar el login/registro
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -44,6 +46,18 @@ function App() {
 
   const toggleCarrito = () => {
     setMostrarCarrito(!mostrarCarrito); // Cambiar el estado para mostrar u ocultar el carrito
+  };
+
+  const toggleLogin = () => {
+    setMostrarLogin(!mostrarLogin); // Cambiar el estado para mostrar u ocultar el login/registro
+  };
+
+  // Nueva función para calcular el total de los productos
+  const calcularTotal = () => {
+    return carrito.reduce((total, item) => {
+      const precioNumerico = parseFloat(item.precio.replace("$", "").replace(".", ""));
+      return total + precioNumerico * item.cantidad;
+    }, 0);
   };
 
   return (
@@ -79,7 +93,8 @@ function App() {
               )}
             </div>
 
-            <button className="boton-con-icono">
+            {/* Botón "Yo" para abrir el modal de login/registro */}
+            <button className="boton-con-icono" onClick={toggleLogin}>
               <i className="fas fa-user"></i> Yo
             </button>
 
@@ -150,12 +165,21 @@ function App() {
                 ))}
               </ul>
             )}
+
+            {/* Mostrar el total */}
+            <div className="carrito-total">
+              <h3>Total: ${calcularTotal().toLocaleString("es-ES")}</h3>
+            </div>
+
             <button className="cerrar-carrito" onClick={toggleCarrito}>
               Cerrar
             </button>
           </div>
         </div>
       )}
+
+      {/* Modal de login/registro */}
+      {mostrarLogin && <LoginRegistro onClose={toggleLogin} />}
 
       <footer>
         <div className="footer-container">

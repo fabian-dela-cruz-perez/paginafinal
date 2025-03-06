@@ -347,3 +347,10 @@ footer {
   justify-content: space-between;
   margin-bottom: 10px;
 }
+
+.carrito-total {
+  text-align: right;
+  margin-top: 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
