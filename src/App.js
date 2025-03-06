@@ -3,7 +3,7 @@ import "./hoja-de-estilos/Logo.css";
 import SimpleSearchBar from "./componentes/Barra-de-busqueda";
 import "./hoja-de-estilos/Barra-de-busqueda.css";
 import Productos from "../src/componentes/Productos";
-import LoginRegistro from "./componentes/LoginRegistro"; // Importar el componente de login/registro
+import LoginRegistro from "./componentes/LoginRegistro";
 import { useState } from "react";
 import conjuntocalamar from "../src/imagenes/conjuto del juego del calamar.jpg";
 import conjuntocapucha from "../src/imagenes/Conjunto capucha de manga larga con estampado de estrellas y letras de Super Windom.jpg";
@@ -12,9 +12,10 @@ import gorra from "../src/imagenes/gorra.jpg";
 function App() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todos"); // Mostrar todos por defecto
   const [carrito, setCarrito] = useState([]);
-  const [mostrarCarrito, setMostrarCarrito] = useState(false); // Estado para mostrar el carrito
-  const [mostrarLogin, setMostrarLogin] = useState(false); // Estado para mostrar el login/registro
+  const [mostrarCarrito, setMostrarCarrito] = useState(false);
+  const [mostrarLogin, setMostrarLogin] = useState(false);
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -26,7 +27,6 @@ function App() {
 
   const agregarAlCarrito = (producto, cantidad) => {
     const productoExistente = carrito.find((item) => item.nombre === producto.nombre);
-
     if (productoExistente) {
       setCarrito(
         carrito.map((item) =>
@@ -45,19 +45,22 @@ function App() {
   };
 
   const toggleCarrito = () => {
-    setMostrarCarrito(!mostrarCarrito); // Cambiar el estado para mostrar u ocultar el carrito
+    setMostrarCarrito(!mostrarCarrito);
   };
 
   const toggleLogin = () => {
-    setMostrarLogin(!mostrarLogin); // Cambiar el estado para mostrar u ocultar el login/registro
+    setMostrarLogin(!mostrarLogin);
   };
 
-  // Nueva función para calcular el total de los productos
   const calcularTotal = () => {
     return carrito.reduce((total, item) => {
       const precioNumerico = parseFloat(item.precio.replace("$", "").replace(".", ""));
       return total + precioNumerico * item.cantidad;
     }, 0);
+  };
+
+  const handleCategoriaSeleccionada = (categoria) => {
+    setCategoriaSeleccionada(categoria); // Asignar la categoría seleccionada
   };
 
   return (
@@ -86,19 +89,26 @@ function App() {
               </button>
               {dropdownOpen && (
                 <div className="dropdown-content">
-                  <button>Conjuntos</button>
-                  <button>Gorras</button>
-                  <button>Accesorios</button>
+                  <button onClick={() => handleCategoriaSeleccionada("Todos")}>
+                    Todos
+                  </button>
+                  <button onClick={() => handleCategoriaSeleccionada("Conjuntos")}>
+                    Conjuntos
+                  </button>
+                  <button onClick={() => handleCategoriaSeleccionada("Gorras")}>
+                    Gorras
+                  </button>
+                  <button onClick={() => handleCategoriaSeleccionada("Accesorios")}>
+                    Accesorios
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Botón "Yo" para abrir el modal de login/registro */}
             <button className="boton-con-icono" onClick={toggleLogin}>
               <i className="fas fa-user"></i> Yo
             </button>
 
-            {/* Botón del carrito */}
             <button className="boton-con-icono" onClick={toggleCarrito}>
               <i className="fas fa-shopping-cart"></i> Carrito ({carrito.length})
             </button>
@@ -131,11 +141,30 @@ function App() {
           descripcionproducto3="Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión."
           precioproducto3="$60.000"
           searchTerm={searchTerm}
+          categoriaSeleccionada={categoriaSeleccionada} // Pasar categoría seleccionada
+          onAgregarAlCarrito={agregarAlCarrito}
+        />
+      </div>
+      <div className="Productos-container">
+        <Productos
+          imagenproducto={conjuntocalamar}
+          nombreproducto="Conjunto del juego del calamar"
+          descripcionproducto="Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar."
+          precioproducto="$50.000"
+          imagenproducto2={conjuntocapucha}
+          nombreproducto2="Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom"
+          descripcionproducto2="Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día."
+          precioproducto2="$45.000"
+          imagenproducto3={gorra}
+          nombreproducto3="Gorra"
+          descripcionproducto3="Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión."
+          precioproducto3="$60.000"
+          searchTerm={searchTerm}
+          categoriaSeleccionada={categoriaSeleccionada} // Pasar categoría seleccionada
           onAgregarAlCarrito={agregarAlCarrito}
         />
       </div>
 
-      {/* Modal del carrito */}
       {mostrarCarrito && (
         <div className="carrito-modal">
           <div className="carrito-content">
@@ -166,7 +195,6 @@ function App() {
               </ul>
             )}
 
-            {/* Mostrar el total */}
             <div className="carrito-total">
               <h3>Total: ${calcularTotal().toLocaleString("es-ES")}</h3>
             </div>
@@ -178,7 +206,6 @@ function App() {
         </div>
       )}
 
-      {/* Modal de login/registro */}
       {mostrarLogin && <LoginRegistro onClose={toggleLogin} />}
 
       <footer>
@@ -228,9 +255,6 @@ function App() {
               <i className="fab fa-instagram"></i>
             </a>
           </div>
-        </div>
-        <div className="footer-bottom">
-          <p>&copy; 2025 RTH Esencia. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

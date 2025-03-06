@@ -1,3 +1,5 @@
+/* Productos.css */
+
 .product-container {
   display: flex;
   flex-wrap: wrap;
@@ -8,14 +10,20 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
-  margin: 8px;
-  width: 250px; /* Ajusta el ancho si es necesario */
+  margin: 16px;
+  width: 250px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Para alinear el contenido internamente */
+  justify-content: space-between;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
 
 .product-title {
   font-size: 1.2rem;
@@ -32,19 +40,73 @@
   color: #333;
 }
 
-
 .product-image {
-  width: 100%;        
-  height: auto;       /* Ajustar automáticamente la altura */
+  width: 100%;
+  height: auto;
   border-radius: 8px;
-  object-fit: contain; /* La imagen se ajusta dentro sin cortarse */
+  object-fit: contain;
 }
-
 
 .productos-container {
   display: flex;
-  justify-content: space-around; /* Para que haya espacio entre los productos */
-  align-items: stretch; /* Asegura que todos los productos tengan la misma altura */
-  gap: 16px; /* Espacio entre los productos */
-  flex-wrap: wrap; /* Para que los productos se ajusten en diferentes filas si es necesario */
+  justify-content: space-around;
+  align-items: stretch;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Mejora en el estilo del botón de agregar al carrito */
+.boton-agregar-carrito {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.boton-agregar-carrito:hover {
+  background-color: #45a049;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+.boton-agregar-carrito:active {
+  background-color: #3e8e41;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(2px);
+}
+
+/* Estilos para el selector de cantidad */
+.cantidad-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.btn-cantidad {
+  background-color: #ddd;
+  border: none;
+  padding: 5px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cantidad:hover {
+  background-color: #ccc;
+}
+
+.cantidad-input {
+  width: 40px;
+  text-align: center;
+  font-size: 16px;
+  margin: 0 5px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }

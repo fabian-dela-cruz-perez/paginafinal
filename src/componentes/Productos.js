@@ -1,26 +1,30 @@
+// Productos.js
 import React, { useState } from "react";
 import '../hoja-de-estilos/Productos.css';
 
-function Productos({ searchTerm, imagenproducto, imagenproducto2, imagenproducto3, nombreproducto, descripcionproducto, precioproducto, nombreproducto2, descripcionproducto2, precioproducto2, nombreproducto3, descripcionproducto3, precioproducto3, onAgregarAlCarrito }) {
+function Productos({ searchTerm, categoriaSeleccionada, imagenproducto, imagenproducto2, imagenproducto3, nombreproducto, descripcionproducto, precioproducto, nombreproducto2, descripcionproducto2, precioproducto2, nombreproducto3, descripcionproducto3, precioproducto3, onAgregarAlCarrito }) {
 
   const productos = [
     {
       imagen: imagenproducto,
       nombre: nombreproducto,
       descripcion: descripcionproducto,
-      precio: precioproducto
+      precio: precioproducto,
+      categoria: "Conjuntos"  // Asignar categoría
     },
     {
       imagen: imagenproducto2,
       nombre: nombreproducto2,
       descripcion: descripcionproducto2,
-      precio: precioproducto2
+      precio: precioproducto2,
+      categoria: "Conjuntos"  // Asignar categoría
     },
     {
       imagen: imagenproducto3,
       nombre: nombreproducto3,
       descripcion: descripcionproducto3,
-      precio: precioproducto3
+      precio: precioproducto3,
+      categoria: "Gorras"  // Asignar categoría
     }
   ];
 
@@ -32,9 +36,12 @@ function Productos({ searchTerm, imagenproducto, imagenproducto2, imagenproducto
     setCantidades(nuevasCantidades);
   };
 
-  const productosFiltrados = productos.filter((producto) =>
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar productos por búsqueda y categoría
+  const productosFiltrados = productos.filter((producto) => {
+    const coincideBusqueda = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const coincideCategoria = categoriaSeleccionada === "Todos" || producto.categoria === categoriaSeleccionada;
+    return coincideBusqueda && coincideCategoria;
+  });
 
   return (
     <div className='product-container'>
@@ -72,7 +79,7 @@ function Productos({ searchTerm, imagenproducto, imagenproducto2, imagenproducto
             </div>
 
             <button
-              className='add-to-cart'
+              className='boton-agregar-carrito'
               onClick={() => onAgregarAlCarrito(producto, cantidades[index])}
             >
               Agregar al carrito
@@ -80,7 +87,7 @@ function Productos({ searchTerm, imagenproducto, imagenproducto2, imagenproducto
           </div>
         ))
       ) : (
-        <p>No se encontraron productos que coincidan con la búsqueda.</p>
+        <p>No se encontraron productos que coincidan con la búsqueda o categoría seleccionada.</p>
       )}
     </div>
   );
