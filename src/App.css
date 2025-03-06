@@ -1,9 +1,9 @@
-
 * {
   margin: 0 auto;
   padding: 0;
   box-sizing: border-box;
 }
+
 .nav-atributos {
   display: flex;
   justify-content: space-between;
@@ -13,14 +13,17 @@
   height: 100px;
   width: 100%;
 }
+
 .Logo {
   font-size: 24px;
   color: white;
   padding-left: 20px;
 }
+
 .ajustar {
   width: 100%;
-  padding: 20px 70px; /* Match the logo's position */
+  padding: 20px 70px;
+  /* Match the logo's position */
   text-align: left;
   max-width: 100%;
   margin: 0;
@@ -28,7 +31,8 @@
 }
 
 .ajustar h1 {
-  margin: 0; /* Remove default margin */
+  margin: 0;
+  /* Remove default margin */
   font-size: 28px;
   color: #333;
   text-align: left;
@@ -37,12 +41,17 @@
 
 .centrar-texto {
   display: flex;
-  justify-content: center; /* Centrar horizontalmente */
-  align-items: center; /* Centrar verticalmente */
-  height: 100px; /* Establece una altura para ver el efecto */
+  justify-content: center;
+  /* Centrar horizontalmente */
+  align-items: center;
+  /* Centrar verticalmente */
+  height: 100px;
+  /* Establece una altura para ver el efecto */
 }
+
 .estilo-footer {
-  margin-top: 10px; /* Ajusta el valor según sea necesario */
+  margin-top: 10px;
+  /* Ajusta el valor según sea necesario */
   padding: 100px;
   text-align: center;
   background-color: #ff4d2d;
@@ -186,7 +195,8 @@ footer {
   padding: 20px 0;
   background-color: #ff5636;
   font-size: 14px;
-  margin-top: 50px; /* Espacio extra entre el footer principal y la parte inferior */
+  margin-top: 50px;
+  /* Espacio extra entre el footer principal y la parte inferior */
 }
 
 .footer-bottom p {
@@ -195,29 +205,64 @@ footer {
 }
 
 
+/* Estilos generales para botones */
 .boton-con-icono {
-  background-color: transparent; /* Fondo transparente para que combine con el nav */
-  border: none; /* Sin borde */
-  color: white; /* Color blanco para el texto e iconos */
-  font-size: 1.2rem; /* Tamaño del texto */
-  padding: 10px 20px; /* Espaciado interno para los botones */
-  cursor: pointer; /* Cambiar cursor a pointer */
-  display: flex; /* Alinear el icono y el texto en línea */
-  align-items: center; /* Centrar verticalmente el contenido */
-  text-transform: uppercase; /* Texto en mayúsculas */
+  background-color: #ff5636;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 25px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .boton-con-icono i {
-  margin-right: 8px; /* Espacio entre el icono y el texto */
+  margin-right: 8px;
 }
 
+/* Hover y efecto de sombra */
 .boton-con-icono:hover {
-  background-color: rgba(255, 255, 255, 0.2); /* Efecto hover con fondo blanco semi-transparente */
-  border-radius: 8px; /* Bordes redondeados */
+  background-color: #ff5636;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Estilos para el dropdown */
+.dropdown-content {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  background-color: #f1f1f1;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  z-index: 1;
+  min-width: 160px;
+}
 
-/* Estilo para el menú desplegable */
+/* Botones dentro del dropdown */
+.dropdown-content button {
+  background-color: #f1f1f1;
+  color: #333;
+  border: none;
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover para los botones del dropdown */
+.dropdown-content button:hover {
+  background-color: #ff5636;
+  color: white;
+}
+
+/* Asegura que el dropdown aparezca de manera correcta */
 .dropdown {
   position: relative;
   display: inline-block;
@@ -225,30 +270,80 @@ footer {
 
 .dropdown-content {
   display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
 }
 
-.dropdown-content a {
-  color: black;
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-}
-
-.dropdown-content a:hover {
-  background-color: #f1f1f1;
-}
-
-/* Mostrar el contenido cuando el menú está abierto */
 .dropdown:hover .dropdown-content {
-  display: block;
+  display: flex;
 }
 
-/* Opcional: Para abrir el menú también cuando se haga clic en el botón */
-.dropdown .boton-con-icono:hover + .dropdown-content {
-  display: block;
+.carrito-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.carrito-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+
+
+.carrito-imagen {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.carrito-detalles {
+  display: flex;
+  flex-direction: column;
+}
+
+.cerrar-carrito {
+  background-color: #ff5f5f;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%;
+  text-align: center;
+}
+
+.cerrar-carrito:hover {
+  background-color: #e04a4a;
+}
+
+.eliminar-producto {
+  background-color: #ff5f5f;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-left: 10px;
+}
+
+.eliminar-producto:hover {
+  background-color: #e04a4a;
+}
+
+.producto-carrito {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }

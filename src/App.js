@@ -6,12 +6,13 @@ import Productos from "../src/componentes/Productos";
 import { useState } from "react";
 import conjuntocalamar from "../src/imagenes/conjuto del juego del calamar.jpg";
 import conjuntocapucha from "../src/imagenes/Conjunto capucha de manga larga con estampado de estrellas y letras de Super Windom.jpg";
-import gorra from "../src/imagenes/gorra.jpg"
-
+import gorra from "../src/imagenes/gorra.jpg";
 
 function App() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [carrito, setCarrito] = useState([]);
+  const [mostrarCarrito, setMostrarCarrito] = useState(false); // Estado para mostrar el carrito
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -19,6 +20,30 @@ function App() {
 
   const handleSearch = (term) => {
     setSearchTerm(term);
+  };
+
+  const agregarAlCarrito = (producto, cantidad) => {
+    const productoExistente = carrito.find((item) => item.nombre === producto.nombre);
+
+    if (productoExistente) {
+      setCarrito(
+        carrito.map((item) =>
+          item.nombre === producto.nombre
+            ? { ...productoExistente, cantidad: productoExistente.cantidad + cantidad }
+            : item
+        )
+      );
+    } else {
+      setCarrito([...carrito, { ...producto, cantidad }]);
+    }
+  };
+
+  const eliminarDelCarrito = (nombreProducto) => {
+    setCarrito(carrito.filter((item) => item.nombre !== nombreProducto));
+  };
+
+  const toggleCarrito = () => {
+    setMostrarCarrito(!mostrarCarrito); // Cambiar el estado para mostrar u ocultar el carrito
   };
 
   return (
@@ -42,25 +67,25 @@ function App() {
             </button>
 
             <div className="dropdown">
-  <button className="boton-con-icono" onClick={toggleDropdown}>
-    <i className="fas fa-tags"></i> Catálogo
-  </button>
-  {dropdownOpen && (
-    <div className="dropdown-content">
-      <button>Conjuntos</button>
-      <button>Gorras</button>
-      <button>Accesorios</button>
-    </div>
-  )}
-</div>
-
+              <button className="boton-con-icono" onClick={toggleDropdown}>
+                <i className="fas fa-tags"></i> Catálogo
+              </button>
+              {dropdownOpen && (
+                <div className="dropdown-content">
+                  <button>Conjuntos</button>
+                  <button>Gorras</button>
+                  <button>Accesorios</button>
+                </div>
+              )}
+            </div>
 
             <button className="boton-con-icono">
               <i className="fas fa-user"></i> Yo
             </button>
 
-            <button className="boton-con-icono">
-              <i className="fas fa-shopping-cart"></i> Carrito
+            {/* Botón del carrito */}
+            <button className="boton-con-icono" onClick={toggleCarrito}>
+              <i className="fas fa-shopping-cart"></i> Carrito ({carrito.length})
             </button>
           </nav>
         </div>
@@ -72,59 +97,66 @@ function App() {
       </h2>
       <br />
 
-
       <div className="ajustar">
         <h1>Bienvenido a RTH</h1>
       </div>
 
       <div className="Productos-container">
-      <Productos
-        imagenproducto={conjuntocalamar}
-        nombreproducto="Conjunto del juego del calamar"
-        descripcionproducto="Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar."
-        precioproducto="$50.000"
-        imagenproducto2={conjuntocapucha}
-        nombreproducto2="Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom"
-        descripcionproducto2="Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día."
-        precioproducto2="$45.000"
-        imagenproducto3={gorra}
-        nombreproducto3="Gorra"
-        descripcionproducto3="Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión."
-        precioproducto3="$60.000"
-        searchTerm={searchTerm}
-      />
         <Productos
-        imagenproducto={''}
-        nombreproducto='titulo'
-        descripcionproducto="descripcion"
-        precioproducto="precio"
-        imagenproducto2={''}
-        nombreproducto2='titulo'
-        descripcionproducto2="descripcion"
-        precioproducto2="precio"
-        imagenproducto3={''}
-        nombreproducto3='titulo'
-        descripcionproducto3="descripcion"
-        precioproducto3="precio"
-        searchTerm={searchTerm}
-      />
-        <Productos
-        imagenproducto={''}
-        nombreproducto='titulo'
-        descripcionproducto="descripcion"
-        precioproducto="precio"
-        imagenproducto2={''}
-        nombreproducto2='titulo'
-        descripcionproducto2="descripcion"
-        precioproducto2="precio"
-        imagenproducto3={''}
-        nombreproducto3='titulo'
-        descripcionproducto3="descripcion"
-        precioproducto3="precio"
-        searchTerm={searchTerm}
-      />
+          imagenproducto={conjuntocalamar}
+          nombreproducto="Conjunto del juego del calamar"
+          descripcionproducto="Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar."
+          precioproducto="$50.000"
+          imagenproducto2={conjuntocapucha}
+          nombreproducto2="Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom"
+          descripcionproducto2="Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día."
+          precioproducto2="$45.000"
+          imagenproducto3={gorra}
+          nombreproducto3="Gorra"
+          descripcionproducto3="Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión."
+          precioproducto3="$60.000"
+          searchTerm={searchTerm}
+          onAgregarAlCarrito={agregarAlCarrito}
+        />
       </div>
-      
+
+      {/* Modal del carrito */}
+      {mostrarCarrito && (
+        <div className="carrito-modal">
+          <div className="carrito-content">
+            <h2>Carrito de Compras</h2>
+            {carrito.length === 0 ? (
+              <p>El carrito está vacío</p>
+            ) : (
+              <ul>
+                {carrito.map((item, index) => (
+                  <li key={index}>
+                    <div className="producto-carrito">
+                      <img src={item.imagen} alt={item.nombre} className="carrito-imagen" />
+                      <div className="carrito-detalles">
+                        <h3>{item.nombre}</h3>
+                        <p>{item.descripcion}</p>
+                        <p>Cantidad: {item.cantidad}</p>
+                        <p>Precio: {item.precio}</p>
+                      </div>
+                      <button
+                        className="eliminar-producto"
+                        onClick={() => eliminarDelCarrito(item.nombre)}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button className="cerrar-carrito" onClick={toggleCarrito}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
       <footer>
         <div className="footer-container">
           <div className="footer-left">
