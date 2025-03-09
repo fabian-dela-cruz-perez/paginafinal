@@ -204,14 +204,17 @@ input:focus {
   margin-bottom: 20px;
 }
 
-.forgot-password a {
+.forgot-password-button {
+  background: none;
+  border: none;
   color: #ff5636;
   text-decoration: none;
   font-size: 14px;
+  cursor: pointer;
   transition: color 0.2s;
 }
 
-.forgot-password a:hover {
+.forgot-password-button:hover {
   color: #e04a4a;
   text-decoration: underline;
 }
@@ -228,6 +231,9 @@ input:focus {
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
   margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .submit-button:hover {
@@ -237,6 +243,12 @@ input:focus {
 
 .submit-button:active {
   transform: translateY(0);
+}
+
+.submit-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .social-login {
@@ -325,6 +337,28 @@ input:focus {
 
 .toggle-form-button:hover {
   text-decoration: underline;
+}
+
+/* Mensajes de error y éxito */
+.error-message,
+.success-message {
+  padding: 10px 15px;
+  margin: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.success-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
 }
 
 /* Responsive styles */

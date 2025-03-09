@@ -1,0 +1,474 @@
+.pasarela-pago-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.pasarela-pago-modal {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: slideUp 0.4s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.pasarela-header {
+    background-color: #ff5636;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pasarela-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.close-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.pasarela-content {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-grow: 1;
+}
+
+.metodos-pago h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.opciones-pago {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.opcion-pago {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.2s ease;
+}
+
+.opcion-pago:hover {
+    border-color: #ff5636;
+}
+
+.opcion-pago input[type="radio"] {
+    margin-right: 10px;
+    accent-color: #ff5636;
+}
+
+.opcion-pago input[type="radio"]:checked+.opcion-contenido {
+    color: #ff5636;
+}
+
+.opcion-pago input[type="radio"]:checked {
+    border-color: #ff5636;
+}
+
+.opcion-contenido {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.opcion-contenido i {
+    font-size: 1.5rem;
+}
+
+.detalles-pago {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.instrucciones-pago h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.pasos-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.paso {
+    display: flex;
+    gap: 15px;
+}
+
+.paso-numero {
+    width: 30px;
+    height: 30px;
+    background-color: #ff5636;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.paso-contenido {
+    flex: 1;
+}
+
+.paso-contenido h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1rem;
+}
+
+.paso-contenido p {
+    margin: 0;
+    color: #555;
+}
+
+.cuentas-bancarias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.cuenta-bancaria {
+    flex: 1;
+    min-width: 200px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.cuenta-bancaria h5 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #ff5636;
+    font-size: 1rem;
+}
+
+.cuenta-bancaria p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+
+.total-a-pagar {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #fff8e1;
+    border-radius: 8px;
+}
+
+.total-a-pagar h3 {
+    margin: 0;
+    color: #ff5636;
+    font-size: 1.3rem;
+}
+
+.continuar-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #ff5636;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.continuar-button:hover {
+    background-color: #e04a4a;
+}
+
+.formulario-comprobante {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.formulario-comprobante h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.campo-formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.campo-formulario label {
+    font-weight: 500;
+    color: #333;
+}
+
+.campo-formulario input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.upload-area {
+    position: relative;
+    margin-top: 5px;
+}
+
+.file-input {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.file-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background-color: #f0f0f0;
+    border: 1px dashed #aaa;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #555;
+}
+
+.file-label:hover {
+    background-color: #e0e0e0;
+}
+
+.file-label i {
+    font-size: 1.2rem;
+}
+
+.formato-permitido {
+    margin: 5px 0 0 0;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+.preview-comprobante {
+    margin-top: 10px;
+}
+
+.preview-comprobante h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    color: #333;
+}
+
+.preview-comprobante img {
+    max-width: 100%;
+    max-height: 200px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.error-mensaje {
+    padding: 10px;
+    background-color: #ffebee;
+    color: #c62828;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.botones-accion {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.volver-button {
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.volver-button:hover {
+    background-color: #e0e0e0;
+}
+
+.confirmar-button {
+    flex: 1;
+    padding: 12px;
+    background-color: #ff5636;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.confirmar-button:hover:not(:disabled) {
+    background-color: #e04a4a;
+}
+
+.confirmar-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.pasarela-footer {
+    padding: 15px 20px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.resumen-pedido {
+    flex: 1;
+    min-width: 250px;
+}
+
+.resumen-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.resumen-item.total {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.direccion-envio {
+    flex: 1;
+    min-width: 250px;
+}
+
+.direccion-envio h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1rem;
+}
+
+.direccion-envio p {
+    margin: 0;
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    .pasarela-pago-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .pasarela-footer {
+        flex-direction: column;
+    }
+
+    .cuentas-bancarias {
+        flex-direction: column;
+    }
+
+    .opciones-pago {
+        flex-direction: column;
+    }
+}

@@ -6,14 +6,23 @@ import SimpleSearchBar from "./componentes/Barra-de-busqueda"
 import "./hoja-de-estilos/Barra-de-busqueda.css"
 import Productos from "../src/componentes/Productos"
 import LoginRegistro from "./componentes/LoginRegistro"
-import { useState } from "react"
+import AdminPanel from "./componentes/AdminPanel"
+import PedidosPanel from "./componentes/PedidosPanel"
+import MisPedidos from "./componentes/MisPedidos"
+import { useState, useEffect } from "react"
 import conjuntocalamar from "./imagenes/conjuto del juego del calamar.jpg"
-import conjuntocapucha from "../src/imagenes/Conjunto para hombres, con estampado de los angeles.jpg"
+import conjuntocapucha from "./imagenes/Conjunto capucha de manga larga con estampado de estrellas y letras de Super Windom.jpg"
 import gorra from "./imagenes/gorra.jpg"
 import conjuntodeportivo from "./imagenes/Conjunto deportivo para Hombre.jpg"
-import conjuntoestampado from "../src/imagenes/Conjunto para hombres, con estampado de los angeles.jpg"
+import conjuntoestampado from "./imagenes/Conjunto para hombres, con estampado de los angeles.jpg"
 import zapatosfoam from "./imagenes/Zapatos foam runner.jpg"
 import monedero from "./imagenes/monedero naruto.jpg"
+import zapatoscorrer from "../src/imagenes/Zapatos deportivos para correr.jpg"
+import zapatoscasuales from "../src/imagenes/Zapatos Casuales Retro.jpg"
+
+// Importar los nuevos componentes en la parte superior del archivo
+import InformacionEnvio from "./componentes/InformacionEnvio"
+import PasarelaPago from "./componentes/PasarelaPago"
 
 function App() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -22,11 +31,34 @@ function App() {
   const [carrito, setCarrito] = useState([])
   const [mostrarCarrito, setMostrarCarrito] = useState(false)
   const [mostrarLogin, setMostrarLogin] = useState(false)
+  const [mostrarAdmin, setMostrarAdmin] = useState(false)
+  const [mostrarPedidos, setMostrarPedidos] = useState(false)
+  const [mostrarMisPedidos, setMostrarMisPedidos] = useState(false)
+  const [usuario, setUsuario] = useState(null)
+
+  // Añadir nuevos estados para el flujo de pedido
+  const [mostrarInfoEnvio, setMostrarInfoEnvio] = useState(false)
+  const [mostrarPasarelaPago, setMostrarPasarelaPago] = useState(false)
+  const [direccionEnvio, setDireccionEnvio] = useState("")
+  // const [datosEnvio, setDatosEnvio] = useState(null); // Se utilizará en futuras implementaciones
+  const [infoPago, setInfoPago] = useState(null)
+
+  // Cargar usuario desde localStorage al iniciar
+  useEffect(() => {
+    const usuarioGuardado = localStorage.getItem("user")
+    if (usuarioGuardado) {
+      try {
+        setUsuario(JSON.parse(usuarioGuardado))
+      } catch (error) {
+        console.error("Error al parsear usuario:", error)
+        localStorage.removeItem("user")
+      }
+    }
+  }, [])
 
   // Definir todos los productos en un solo array
   const todosLosProductos = [
     {
-      id: 1,
       imagen: conjuntocalamar,
       nombre: "Conjunto del juego del calamar",
       descripcion: "Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar.",
@@ -34,7 +66,6 @@ function App() {
       categoria: "Conjuntos",
     },
     {
-      id: 2,
       imagen: conjuntocapucha,
       nombre: "Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom",
       descripcion: "Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día.",
@@ -42,7 +73,6 @@ function App() {
       categoria: "Conjuntos",
     },
     {
-      id: 3,
       imagen: gorra,
       nombre: "Gorra",
       descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
@@ -50,7 +80,6 @@ function App() {
       categoria: "Gorras",
     },
     {
-      id: 4,
       imagen: conjuntodeportivo,
       nombre: "Conjunto deportivo",
       descripcion:
@@ -59,7 +88,6 @@ function App() {
       categoria: "Conjuntos",
     },
     {
-      id: 5,
       imagen: conjuntoestampado,
       nombre: "Conjunto deportivo negro",
       descripcion:
@@ -68,7 +96,6 @@ function App() {
       categoria: "Conjuntos",
     },
     {
-      id: 6,
       imagen: zapatosfoam,
       nombre: "Zapatos foam",
       descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
@@ -76,12 +103,41 @@ function App() {
       categoria: "Zapatos",
     },
     {
-      id: 7,
       imagen: monedero,
       nombre: "Monedero de naruto",
       descripcion: "Monedero temático de Naruto, perfecto para fans del anime. Diseño práctico y duradero.",
       precio: "$80.000",
       categoria: "Accesorios",
+    },
+    {
+      imagen: zapatoscorrer,
+      nombre: "Zapatos deportivos",
+      descripcion:
+        "Estas zapatillas parecen estar diseñadas para ofrecer comodidad y un estilo audaz, ideales tanto para entrenar como para uso casual.",
+      precio: "$180.000",
+      categoria: "Zapatos",
+    },
+    {
+      imagen: zapatoscasuales,
+      nombre: "Zapatos casuales retro",
+      descripcion:
+        "Zapatillas deportivas blancas con detalles en azul y patrón estilo bandana, suela gruesa y toques rojos en el cierre.",
+      precio: "$180.000",
+      categoria: "Zapatos",
+    },
+    {
+      imagen: "",
+      nombre: "",
+      descripcion: "",
+      precio: "",
+      categoria: "",
+    },
+    {
+      imagen: "",
+      nombre: "",
+      descripcion: "",
+      precio: "",
+      categoria: "",
     },
   ]
 
@@ -126,6 +182,23 @@ function App() {
     setMostrarLogin(!mostrarLogin)
   }
 
+  const toggleAdmin = () => {
+    setMostrarAdmin(!mostrarAdmin)
+  }
+
+  const togglePedidos = () => {
+    setMostrarPedidos(!mostrarPedidos)
+  }
+
+  const toggleMisPedidos = () => {
+    setMostrarMisPedidos(!mostrarMisPedidos)
+  }
+
+  const handleLogout = () => {
+    setUsuario(null)
+    localStorage.removeItem("user")
+  }
+
   const calcularTotal = () => {
     return carrito.reduce((total, item) => {
       const precioNumerico = Number.parseFloat(item.precio.replace("$", "").replace(".", ""))
@@ -136,6 +209,91 @@ function App() {
   const handleCategoriaSeleccionada = (categoria) => {
     setCategoriaSeleccionada(categoria) // Asignar la categoría seleccionada
     console.log("Categoría seleccionada:", categoria) // Para verificar el cambio
+  }
+
+  // Reemplazar la función realizarPedido con esta nueva versión
+  const realizarPedido = () => {
+    if (!usuario) {
+      alert("Debes iniciar sesión para realizar un pedido")
+      toggleLogin()
+      return
+    }
+
+    if (carrito.length === 0) {
+      alert("Tu carrito está vacío")
+      return
+    }
+
+    // Mostrar el formulario de información de envío
+    setMostrarCarrito(false)
+    setMostrarInfoEnvio(true)
+  }
+
+  // Añadir nuevas funciones para manejar el flujo de pedido
+  const handleContinuarPago = (direccion, datos) => {
+    setDireccionEnvio(direccion)
+    // setDatosEnvio(datos);
+    setMostrarInfoEnvio(false)
+    setMostrarPasarelaPago(true)
+  }
+
+  const handlePagoCompletado = async (infoPago) => {
+    setInfoPago(infoPago)
+
+    try {
+      // Preparar datos del pedido
+      const pedidoData = {
+        usuario: {
+          id: usuario.id,
+          nombre: `${usuario.nombre} ${usuario.apellido}`,
+          email: usuario.email,
+        },
+        productos: carrito.map((item) => ({
+          nombre: item.nombre,
+          precio: item.precio,
+          cantidad: item.cantidad,
+          color: item.color,
+          talla: item.talla,
+        })),
+        total: calcularTotal(),
+        direccionEnvio,
+        pago: infoPago,
+      }
+
+      // Enviar pedido al servidor
+      const response = await fetch("http://localhost:5000/api/pedidos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(pedidoData),
+      })
+
+      if (!response.ok) {
+        throw new Error("Error al procesar el pedido")
+      }
+
+      // Limpiar carrito
+      setCarrito([])
+    } catch (error) {
+      console.error("Error:", error)
+      alert("No se pudo procesar tu pedido. Por favor, intenta de nuevo.")
+    }
+  }
+
+  const cerrarPasarelaPago = () => {
+    setMostrarPasarelaPago(false)
+    if (infoPago) {
+      // Si el pago fue exitoso, mostrar mensaje
+      alert("¡Pedido realizado con éxito! Puedes ver el estado de tu pedido en 'Mis Pedidos'.")
+      setInfoPago(null)
+    }
+  }
+
+  const cerrarInfoEnvio = () => {
+    setMostrarInfoEnvio(false)
+    // Opcional: volver a mostrar el carrito
+    setMostrarCarrito(true)
   }
 
   return (
@@ -171,12 +329,37 @@ function App() {
             </div>
 
             <button className="boton-con-icono" onClick={toggleLogin}>
-              <i className="fas fa-user"></i> Yo
+              <i className="fas fa-user"></i> {usuario ? usuario.nombre : "Yo"}
             </button>
 
-            <button className="boton-con-icono" onClick={toggleCarrito}>
-              <i className="fas fa-shopping-cart"></i> Carrito ({carrito.length})
-            </button>
+            {usuario && usuario.isAdmin && (
+              <>
+                <button className="boton-con-icono admin-button" onClick={toggleAdmin}>
+                  <i className="fas fa-users-cog"></i> Usuarios
+                </button>
+                <button className="boton-con-icono pedidos-button" onClick={togglePedidos}>
+                  <i className="fas fa-shopping-bag"></i> Pedidos
+                </button>
+              </>
+            )}
+
+            {usuario && !usuario.isAdmin && (
+              <button className="boton-con-icono mis-pedidos-button" onClick={toggleMisPedidos}>
+                <i className="fas fa-box"></i> Mis Pedidos
+              </button>
+            )}
+
+            {usuario && (
+              <button className="boton-con-icono" onClick={handleLogout}>
+                <i className="fas fa-sign-out-alt"></i> Cerrar sesión
+              </button>
+            )}
+
+            {!usuario?.isAdmin && (
+              <button className="boton-con-icono" onClick={toggleCarrito}>
+                <i className="fas fa-shopping-cart"></i> Carrito ({carrito.length})
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -256,8 +439,8 @@ function App() {
                 <button className="cerrar-carrito" onClick={toggleCarrito}>
                   Cerrar
                 </button>
-                <button className="proceder-pago" disabled={carrito.length === 0}>
-                  Proceder al pago
+                <button className="proceder-pago" disabled={carrito.length === 0} onClick={realizarPedido}>
+                  Realizar Pedido
                 </button>
               </div>
             </div>
@@ -266,6 +449,22 @@ function App() {
       )}
 
       {mostrarLogin && <LoginRegistro onClose={toggleLogin} />}
+      {mostrarAdmin && <AdminPanel onClose={toggleAdmin} />}
+      {mostrarPedidos && <PedidosPanel onClose={togglePedidos} />}
+      {mostrarMisPedidos && usuario && <MisPedidos onClose={toggleMisPedidos} userId={usuario.id} />}
+
+      {mostrarInfoEnvio && (
+        <InformacionEnvio total={calcularTotal()} onClose={cerrarInfoEnvio} onContinuarPago={handleContinuarPago} />
+      )}
+
+      {mostrarPasarelaPago && (
+        <PasarelaPago
+          total={calcularTotal()}
+          onClose={cerrarPasarelaPago}
+          onPagoCompletado={handlePagoCompletado}
+          direccionEnvio={direccionEnvio}
+        />
+      )}
 
       <footer>
         <div className="footer-container">

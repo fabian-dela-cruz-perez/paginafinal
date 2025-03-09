@@ -10,6 +10,11 @@ function LoginRegistro({ onClose }) {
   const [nombre, setNombre] = useState("")
   const [apellido, setApellido] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+
+  const API_URL = "http://localhost:5000/api"
 
   const toggleForm = () => {
     setIsLogin(!isLogin)
@@ -18,17 +23,71 @@ function LoginRegistro({ onClose }) {
     setPassword("")
     setNombre("")
     setApellido("")
+    setError("")
+    setSuccess("")
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Aquí iría la lógica de autenticación
-    console.log(isLogin ? "Iniciando sesión..." : "Registrando usuario...")
-    console.log({ email, password, nombre, apellido })
+    setLoading(true)
+    setError("")
+    setSuccess("")
 
-    // Simulación de éxito
-    alert(isLogin ? "Inicio de sesión exitoso!" : "Registro exitoso!")
-    onClose()
+    try {
+      if (isLogin) {
+        // Proceso de login
+        const response = await fetch(`${API_URL}/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Error al iniciar sesión")
+        }
+
+        setSuccess("Inicio de sesión exitoso")
+        // Aquí podrías guardar el usuario en el estado global o localStorage
+        localStorage.setItem("user", JSON.stringify(data.user))
+
+        // Cerrar el modal después de un breve retraso
+        setTimeout(() => {
+          onClose()
+          // Recargar la página para aplicar los cambios de rol
+          window.location.reload()
+        }, 1500)
+      } else {
+        // Proceso de registro
+        const response = await fetch(`${API_URL}/register`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nombre, apellido, email, password }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Error al registrar usuario")
+        }
+
+        setSuccess("Registro exitoso. Ya puedes iniciar sesión.")
+        // Cambiar al formulario de login después de un breve retraso
+        setTimeout(() => {
+          setIsLogin(true)
+        }, 1500)
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const togglePasswordVisibility = () => {
@@ -53,6 +112,9 @@ function LoginRegistro({ onClose }) {
             Registrarse
           </button>
         </div>
+
+        {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
 
         <form onSubmit={handleSubmit} className="login-form">
           {!isLogin && (
@@ -137,8 +199,8 @@ function LoginRegistro({ onClose }) {
             </div>
           )}
 
-          <button type="submit" className="submit-button">
-            {isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? <i className="fas fa-spinner fa-spin"></i> : isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
           </button>
 
           <div className="social-login">

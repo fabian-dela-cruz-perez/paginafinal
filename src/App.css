@@ -204,7 +204,6 @@ footer {
   color: #ccc;
 }
 
-
 /* Estilos generales para botones */
 .boton-con-icono {
   background-color: #ff5636;
@@ -298,8 +297,6 @@ footer {
   overflow-y: auto;
 }
 
-
-
 .carrito-imagen {
   width: 50px;
   height: 50px;
@@ -353,4 +350,113 @@ footer {
   margin-top: 20px;
   font-size: 1.5rem;
   font-weight: bold;
+}
+
+/* Estilos para el botón de administrador */
+.admin-button {
+  background-color: #4a6fa5;
+}
+
+.admin-button:hover {
+  background-color: #3a5a8c;
+}
+
+/* Estilos para el botón de pedidos */
+.pedidos-button {
+  background-color: #5a9a5a;
+}
+
+.pedidos-button:hover {
+  background-color: #4a8a4a;
+}
+
+/* Estilos para el botón de mis pedidos */
+.mis-pedidos-button {
+  background-color: #9a5a9a;
+}
+
+.mis-pedidos-button:hover {
+  background-color: #8a4a8a;
+}
+
+/* Estilos para el botón de proceder al pago */
+.proceder-pago {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  text-align: center;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.proceder-pago:hover {
+  background-color: #45a049;
+}
+
+.proceder-pago:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Estilos para la lista de carrito */
+.carrito-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.carrito-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.carrito-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.carrito-contador {
+  background-color: #ff5636;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.carrito-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carrito-empty {
+  text-align: center;
+  padding: 30px 0;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .nav-atributos {
+    padding: 15px 20px;
+    flex-wrap: wrap;
+  }
+
+  .boton-con-icono {
+    margin: 5px;
+    font-size: 14px;
+    padding: 8px 15px;
+  }
+
+  .carrito-content {
+    width: 90%;
+    max-width: 400px;
+  }
 }
