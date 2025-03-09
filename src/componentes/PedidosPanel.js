@@ -104,7 +104,8 @@ function PedidosPanel({ onClose }) {
                 throw new Error("No se pudo actualizar el estado del pedido")
             }
 
-            const pedidoActualizado = await response.json()
+            // Eliminar la variable no utilizada y usar directamente la respuesta
+            await response.json()
 
             // Actualizar el pedido en la lista
             setPedidos(pedidos.map((p) => (p._id === pedidoSeleccionado._id ? { ...p, estado: estadoSeleccionado } : p)))
@@ -257,6 +258,19 @@ function PedidosPanel({ onClose }) {
                                             <p>
                                                 <strong>Fecha:</strong> {formatDate(pedidoSeleccionado.pago.fecha)}
                                             </p>
+                                            {pedidoSeleccionado.pago.comprobante && (
+                                                <div className="comprobante-preview">
+                                                    <h5>Comprobante de Pago:</h5>
+                                                    <a
+                                                        href={`http://localhost:5000/${pedidoSeleccionado.pago.comprobante}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="ver-comprobante-button"
+                                                    >
+                                                        <i className="fas fa-file-alt"></i> Ver Comprobante
+                                                    </a>
+                                                </div>
+                                            )}
                                             {tienePagoPendiente(pedidoSeleccionado) && (
                                                 <div className="alerta-pago-pendiente">
                                                     <i className="fas fa-exclamation-triangle"></i>

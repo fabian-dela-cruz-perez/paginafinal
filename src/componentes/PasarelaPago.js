@@ -11,6 +11,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
     const [cargando, setCargando] = useState(false)
     const [error, setError] = useState("")
     const [previewComprobante, setPreviewComprobante] = useState(null)
+    const [referenciaError, setReferenciaError] = useState("")
 
     // Información de cuentas bancarias
     const cuentasBancarias = [
@@ -73,12 +74,63 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
         return true
     }
 
+    // Agregar esta función de validación
+    const validarReferenciaNequi = (referencia) => {
+        // Validar que solo contenga números
+        if (!/^\d+$/.test(referencia)) {
+            return {
+                valido: false,
+                mensaje: "La referencia debe contener solo números",
+            }
+        }
+
+        // Validar longitud (Nequi usa referencias de 12 dígitos)
+        if (referencia.length !== 12) {
+            return {
+                valido: false,
+                mensaje: "La referencia debe tener exactamente 12 dígitos",
+            }
+        }
+
+        // Validar que comience con 1 (formato Nequi)
+        if (!referencia.startsWith("1")) {
+            return {
+                valido: false,
+                mensaje: "La referencia de Nequi debe comenzar con 1",
+            }
+        }
+
+        return {
+            valido: true,
+            mensaje: "Referencia válida",
+        }
+    }
+
+    const handleReferenciaChange = (e) => {
+        const nuevaReferencia = e.target.value
+        setNumeroReferencia(nuevaReferencia)
+
+        if (metodoPago === "nequi") {
+            const validacion = validarReferenciaNequi(nuevaReferencia)
+            setReferenciaError(validacion.valido ? "" : validacion.mensaje)
+        }
+    }
+
     // Procesar pago
     const procesarPago = async (e) => {
         e.preventDefault()
 
         if (!validarFormulario()) {
             return
+        }
+
+        // Si es Nequi, validar la referencia
+        if (metodoPago === "nequi") {
+            const validacion = validarReferenciaNequi(numeroReferencia)
+            if (!validacion.valido) {
+                setError(validacion.mensaje)
+                return
+            }
         }
 
         setCargando(true)
@@ -187,10 +239,23 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                     <input
                         type="text"
                         value={numeroReferencia}
-                        onChange={(e) => setNumeroReferencia(e.target.value)}
-                        placeholder="Ej: 123456789"
+                        onChange={handleReferenciaChange}
+                        placeholder={metodoPago === "nequi" ? "12 dígitos" : "Ej: 123456789"}
+                        className={referenciaError ? "input-error" : ""}
                         required
                     />
+                    {referenciaError && (
+                        <div className="error-mensaje">
+                            <i className="fas fa-exclamation-circle"></i>
+                            {referenciaError}
+                        </div>
+                    )}
+                    {metodoPago === "nequi" && !referenciaError && numeroReferencia && (
+                        <div className="referencia-valida">
+                            <i className="fas fa-check-circle"></i>
+                            Referencia válida
+                        </div>
+                    )}
                 </div>
 
                 <div className="campo-formulario">

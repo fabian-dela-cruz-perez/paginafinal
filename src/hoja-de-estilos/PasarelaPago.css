@@ -290,6 +290,16 @@
     font-size: 1rem;
 }
 
+/* Mejorar el estilo del campo de entrada */
+.campo-formulario input {
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.campo-formulario input:focus {
+    border-color: #ff5636;
+    box-shadow: 0 0 0 2px rgba(255, 86, 54, 0.2);
+}
+
 .upload-area {
     position: relative;
     margin-top: 5px;
@@ -350,11 +360,34 @@
 }
 
 .error-mensaje {
-    padding: 10px;
-    background-color: #ffebee;
-    color: #c62828;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.error-mensaje i {
+    font-size: 1rem;
+}
+
+.input-error {
+    border-color: #dc3545 !important;
+    background-color: #fff8f8;
+}
+
+.referencia-valida {
+    color: #28a745;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.referencia-valida i {
+    font-size: 1rem;
 }
 
 .botones-accion {
