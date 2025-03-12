@@ -1,0 +1,285 @@
+.nequi-config-modal {
+    width: 90%;
+    max-width: 1000px;
+    max-height: 85vh;
+}
+
+.nequi-config-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.nequi-config-section {
+    flex: 1;
+    min-width: 300px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.nequi-config-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.nequi-config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-save {
+    padding: 10px 15px;
+    background-color: #ff5636;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.btn-save:hover:not(:disabled) {
+    background-color: #e04a4a;
+}
+
+.btn-save:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.alert {
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-error {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border-left: 4px solid #d32f2f;
+}
+
+.alert-success {
+    background-color: #e8f5e9;
+    color: #388e3c;
+    border-left: 4px solid #388e3c;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #666;
+    font-size: 1.1rem;
+    gap: 10px;
+}
+
+.pending-payments-actions {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-verify-payments {
+    padding: 8px 12px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.btn-verify-payments:hover:not(:disabled) {
+    background-color: #1976d2;
+}
+
+.btn-verify-payments:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.no-pending-payments {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.pending-payments-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.pending-payment-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.pending-payment-item:last-child {
+    border-bottom: none;
+}
+
+.payment-info {
+    flex: 1;
+}
+
+.payment-client {
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+}
+
+.payment-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.btn-simulate-callback {
+    padding: 6px 10px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.btn-simulate-callback:hover {
+    background-color: #388e3c;
+}
+
+.verification-result {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.verification-result h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.verification-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.verification-list li {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.verification-list li:last-child {
+    border-bottom: none;
+}
+
+.verification-list li.updated {
+    background-color: #e8f5e9;
+}
+
+.verification-ref {
+    font-weight: 500;
+}
+
+.verification-status {
+    color: #555;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .nequi-config-container {
+        flex-direction: column;
+    }
+
+    .payment-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .pending-payment-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .payment-actions {
+        margin-top: 10px;
+        align-self: flex-end;
+    }
+}

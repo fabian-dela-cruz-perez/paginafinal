@@ -51,7 +51,13 @@ function LoginRegistro({ onClose }) {
         }
 
         setSuccess("Inicio de sesión exitoso")
-        // Aquí podrías guardar el usuario en el estado global o localStorage
+
+        // Guardar el token de autenticación si existe
+        if (data.token) {
+          localStorage.setItem("token", data.token)
+        }
+
+        // Guardar la información del usuario
         localStorage.setItem("user", JSON.stringify(data.user))
 
         // Cerrar el modal después de un breve retraso
@@ -233,4 +239,3 @@ function LoginRegistro({ onClose }) {
 }
 
 export default LoginRegistro
-

@@ -1,6 +1,5 @@
 "use client"
 
-// Productos.js
 import { useState, useEffect } from "react"
 import "../hoja-de-estilos/Productos.css"
 
@@ -11,6 +10,10 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   const [coloresSeleccionados, setColoresSeleccionados] = useState({})
   // Tallas seleccionadas para cada producto
   const [tallasSeleccionadas, setTallasSeleccionadas] = useState({})
+  // Estado para la imagen seleccionada de cada producto
+  const [imagenesSeleccionadas, setImagenesSeleccionadas] = useState({})
+  // Estado para el modal de imagen ampliada
+  const [imagenAmpliada, setImagenAmpliada] = useState(null)
 
   const actualizarCantidad = (id, nuevaCantidad) => {
     setCantidades({
@@ -33,6 +36,29 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     })
   }
 
+  // Nueva función para actualizar la imagen seleccionada
+  const actualizarImagenSeleccionada = (productoId, imagenUrl) => {
+    setImagenesSeleccionadas({
+      ...imagenesSeleccionadas,
+      [productoId]: imagenUrl,
+    })
+  }
+
+  // Función para obtener la imagen actual de un producto
+  const getImagenSeleccionada = (producto, index) => {
+    return imagenesSeleccionadas[index] || (producto.imagenes && producto.imagenes[0]) || producto.imagen
+  }
+
+  // Función para mostrar la imagen ampliada
+  const mostrarImagenAmpliada = (imagenUrl, nombre) => {
+    setImagenAmpliada({ url: imagenUrl, nombre: nombre })
+  }
+
+  // Función para cerrar la imagen ampliada
+  const cerrarImagenAmpliada = () => {
+    setImagenAmpliada(null)
+  }
+
   // Obtener la cantidad actual de un producto
   const getCantidad = (id) => {
     return cantidades[id] || 1
@@ -49,9 +75,15 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   }
 
   // Función para determinar si mostrar selector de color
-  const mostrarSelectorColor = (categoria) => {
+  const mostrarSelectorColor = (categoria, producto) => {
     // Categorías que no necesitan selector de color
     const categoriasColorUnico = ["Accesorios", "Gorras"]
+
+    // Verificar si es un conjunto de color único
+    if (categoria === "Conjuntos" && producto && producto.colorUnico) {
+      return false
+    }
+
     return !categoriasColorUnico.includes(categoria)
   }
 
@@ -62,8 +94,13 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     return !categoriasTallaUnica.includes(categoria)
   }
 
-  // Función para obtener el color predeterminado según la categoría
-  const getColorPredeterminado = (categoria) => {
+  // Función para obtener el color predeterminado según la categoría o producto
+  const getColorPredeterminado = (categoria, producto) => {
+    // Si es un conjunto con color único, usar ese color
+    if (categoria === "Conjuntos" && producto && producto.colorUnico) {
+      return producto.colorUnico
+    }
+
     switch (categoria) {
       case "Accesorios":
         return "único"
@@ -152,9 +189,15 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
       const nuevasTallas = { ...tallasSeleccionadas }
 
       productos.forEach((producto, index) => {
-        if (!mostrarSelectorColor(producto.categoria) && !nuevosColores[index]) {
-          nuevosColores[index] = getColorPredeterminado(producto.categoria)
+        // Si es un conjunto con color único, establecer ese color
+        if (producto.categoria === "Conjuntos" && producto.colorUnico) {
+          nuevosColores[index] = producto.colorUnico
         }
+        // Para otras categorías que no muestran selector de color
+        else if (!mostrarSelectorColor(producto.categoria, producto) && !nuevosColores[index]) {
+          nuevosColores[index] = getColorPredeterminado(producto.categoria, producto)
+        }
+
         if (!mostrarSelectorTalla(producto.categoria) && !nuevasTallas[index]) {
           nuevasTallas[index] = getTallaPredeterminada(producto.categoria)
         }
@@ -163,7 +206,8 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
       setColoresSeleccionados(nuevosColores)
       setTallasSeleccionadas(nuevasTallas)
     }
-  }, [productos, coloresSeleccionados, tallasSeleccionadas]) // Añadidas las dependencias faltantes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productos])
 
   // Manejar el agregar al carrito con color y talla
   const handleAgregarAlCarrito = (producto, index) => {
@@ -171,9 +215,13 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     let talla = getTalla(index)
     const cantidad = getCantidad(index)
 
+    // Para conjuntos de color único, usar ese color
+    if (producto.categoria === "Conjuntos" && producto.colorUnico) {
+      color = producto.colorUnico
+    }
     // Para productos específicos, establecer valores predeterminados
-    if (!mostrarSelectorColor(producto.categoria)) {
-      color = color || getColorPredeterminado(producto.categoria)
+    else if (!mostrarSelectorColor(producto.categoria, producto)) {
+      color = color || getColorPredeterminado(producto.categoria, producto)
     }
 
     if (!mostrarSelectorTalla(producto.categoria)) {
@@ -181,7 +229,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     }
 
     // Validar solo si es necesario para este tipo de producto
-    if (mostrarSelectorColor(producto.categoria) && !color) {
+    if (mostrarSelectorColor(producto.categoria, producto) && !color) {
       alert("Por favor selecciona un color")
       return
     }
@@ -200,15 +248,46 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
       {productosFiltrados.length > 0 ? (
         productosFiltrados.map((producto, index) => (
           <div key={index} className="product-card">
-            <div className="product-image">
-              <img src={producto.imagen || "/placeholder.svg"} alt={producto.nombre} />
+            <div className="product-image-container">
+              <div className="product-image main-image">
+                <img
+                  src={getImagenSeleccionada(producto, index) || "/placeholder.svg"}
+                  alt={producto.nombre}
+                  onClick={() => mostrarImagenAmpliada(getImagenSeleccionada(producto, index), producto.nombre)}
+                />
+              </div>
+
+              {/* Galería de miniaturas */}
+              {producto.imagenes && producto.imagenes.length > 0 && (
+                <div className="product-thumbnails">
+                  {producto.imagenes.map((imagen, imgIndex) => (
+                    <button
+                      key={imgIndex}
+                      className={`thumbnail-button ${getImagenSeleccionada(producto, index) === imagen ? "selected" : ""}`}
+                      onClick={() => actualizarImagenSeleccionada(index, imagen)}
+                    >
+                      <img
+                        src={imagen || "/placeholder.svg"}
+                        alt={`${producto.nombre} vista ${imgIndex + 1}`}
+                        className="thumbnail-image"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
             <h3 className="product-title">{producto.nombre}</h3>
             <p className="product-description">{producto.descripcion}</p>
             <p className="product-price">{producto.precio}</p>
 
-            {/* Selector de color - condicional según categoría */}
-            {mostrarSelectorColor(producto.categoria) ? (
+            {/* Selector de color - condicional según categoría y tipo de producto */}
+            {producto.categoria === "Conjuntos" && producto.colorUnico ? (
+              <div className="selector-container">
+                <label className="selector-label">Color:</label>
+                <div className="color-unico">{producto.colorUnico}</div>
+              </div>
+            ) : mostrarSelectorColor(producto.categoria, producto) ? (
               <div className="selector-container">
                 <label htmlFor={`color-${index}`} className="selector-label">
                   Color:
@@ -229,7 +308,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
             ) : (
               <div className="selector-container">
                 <label className="selector-label">Color:</label>
-                <div className="color-unico">{getColorPredeterminado(producto.categoria)}</div>
+                <div className="color-unico">{getColorPredeterminado(producto.categoria, producto)}</div>
               </div>
             )}
 
@@ -283,6 +362,21 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
         ))
       ) : (
         <p className="no-products">No se encontraron productos</p>
+      )}
+
+      {/* Modal para imagen ampliada */}
+      {imagenAmpliada && (
+        <div className="imagen-ampliada-modal" onClick={cerrarImagenAmpliada}>
+          <div className="imagen-ampliada-contenido" onClick={(e) => e.stopPropagation()}>
+            <button className="cerrar-imagen" onClick={cerrarImagenAmpliada}>
+              <i className="fas fa-times"></i>
+            </button>
+            <h3>{imagenAmpliada.nombre}</h3>
+            <div className="imagen-ampliada-container">
+              <img src={imagenAmpliada.url || "/placeholder.svg"} alt={imagenAmpliada.nombre} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

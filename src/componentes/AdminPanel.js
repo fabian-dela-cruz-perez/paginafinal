@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import "../hoja-de-estilos/AdminPanel.css"
 
@@ -11,36 +10,38 @@ function AdminPanel({ onClose }) {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch("http://localhost:5000/api/users")
+                setLoading(true)
+                setError("")
+
+                const token = localStorage.getItem("token")
+                if (!token) {
+                    throw new Error("No hay token de autenticación")
+                }
+
+                const response = await fetch("http://localhost:5000/api/users", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                })
 
                 if (!response.ok) {
                     throw new Error("No se pudieron cargar los usuarios")
                 }
 
                 const data = await response.json()
-                setUsers(data)
+                setUsers(Array.isArray(data) ? data : [])
                 setLoading(false)
             } catch (error) {
                 console.error("Error al cargar usuarios:", error)
-                setError("Error al cargar los usuarios. Por favor, intenta de nuevo.")
+                setError(error.message || "Error al cargar los usuarios. Por favor, intenta de nuevo.")
                 setLoading(false)
             }
         }
 
         fetchUsers()
     }, [])
-
-    // Formatear fecha
-    const formatDate = (dateString) => {
-        const options = {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }
-        return new Date(dateString).toLocaleDateString("es-ES", options)
-    }
 
     return (
         <div className="admin-modal-overlay">
@@ -70,19 +71,26 @@ function AdminPanel({ onClose }) {
                                         <th>Nombre</th>
                                         <th>Apellido</th>
                                         <th>Email</th>
-                                        <th>Fecha de Registro</th>
                                         <th>Rol</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {users.length > 0 ? (
+                                    {users && users.length > 0 ? (
                                         users.map((user) => (
-                                            <tr key={user._id}>
+                                            <tr key={user.id}>
                                                 <td>{user.nombre}</td>
                                                 <td>{user.apellido}</td>
                                                 <td>{user.email}</td>
-                                                <td>{formatDate(user.fechaRegistro)}</td>
                                                 <td>{user.isAdmin ? "Administrador" : "Usuario"}</td>
+                                                <td>
+                                                    <button className="btn-edit" onClick={() => console.log("Editar usuario:", user.id)}>
+                                                        <i className="fas fa-edit"></i> Editar
+                                                    </button>
+                                                    <button className="btn-delete" onClick={() => console.log("Eliminar usuario:", user.id)}>
+                                                        <i className="fas fa-trash"></i> Eliminar
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))
                                     ) : (

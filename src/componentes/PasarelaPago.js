@@ -3,8 +3,8 @@
 import { useState } from "react"
 import "../hoja-de-estilos/PasarelaPago.css"
 
-function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
-    const [metodoPago, setMetodoPago] = useState("consignacion")
+function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio, isAdmin = false }) {
+    const [metodoPago, setMetodoPago] = useState("nequi")
     const [comprobante, setComprobante] = useState(null)
     const [numeroReferencia, setNumeroReferencia] = useState("")
     const [mostrarInstrucciones, setMostrarInstrucciones] = useState(true)
@@ -13,32 +13,17 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
     const [previewComprobante, setPreviewComprobante] = useState(null)
     const [referenciaError, setReferenciaError] = useState("")
 
-    // Información de cuentas bancarias
+    // Reducido a solo la cuenta Nequi
     const cuentasBancarias = [
-        {
-            banco: "Bancolombia",
-            tipo: "Cuenta de Ahorros",
-            numero: "123-456789-00",
-            titular: "RTH Esencia S.A.S.",
-            nit: "900.123.456-7",
-        },
-        {
-            banco: "Davivienda",
-            tipo: "Cuenta Corriente",
-            numero: "987-654321-00",
-            titular: "RTH Esencia S.A.S.",
-            nit: "900.123.456-7",
-        },
         {
             banco: "Nequi",
             tipo: "Cuenta Digital",
             numero: "300-123-4567",
             titular: "RTH Esencia",
-            nit: "900.123.456-7",
         },
     ]
 
-    // Manejar cambio de método de pago
+    // Manejar cambio de método de pago - Solo tenemos Nequi pero mantenemos por si en futuro se agregan más
     const handleMetodoPagoChange = (e) => {
         setMetodoPago(e.target.value)
         setMostrarInstrucciones(true)
@@ -74,29 +59,21 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
         return true
     }
 
-    // Agregar esta función de validación
+    // Validar referencia según el nuevo formato: M seguido de 7 números (total 8 caracteres)
     const validarReferenciaNequi = (referencia) => {
-        // Validar que solo contenga números
-        if (!/^\d+$/.test(referencia)) {
+        // Validar formato: M seguido de números
+        if (!/^M\d+$/.test(referencia)) {
             return {
                 valido: false,
-                mensaje: "La referencia debe contener solo números",
+                mensaje: "La referencia debe comenzar con 'M' seguida de números",
             }
         }
 
-        // Validar longitud (Nequi usa referencias de 12 dígitos)
-        if (referencia.length !== 12) {
+        // Validar longitud (8 caracteres)
+        if (referencia.length !== 8) {
             return {
                 valido: false,
-                mensaje: "La referencia debe tener exactamente 12 dígitos",
-            }
-        }
-
-        // Validar que comience con 1 (formato Nequi)
-        if (!referencia.startsWith("1")) {
-            return {
-                valido: false,
-                mensaje: "La referencia de Nequi debe comenzar con 1",
+                mensaje: "La referencia debe tener exactamente 8 caracteres",
             }
         }
 
@@ -110,10 +87,9 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
         const nuevaReferencia = e.target.value
         setNumeroReferencia(nuevaReferencia)
 
-        if (metodoPago === "nequi") {
-            const validacion = validarReferenciaNequi(nuevaReferencia)
-            setReferenciaError(validacion.valido ? "" : validacion.mensaje)
-        }
+        // Siempre validamos con el formato de Nequi ya que es el único método de pago
+        const validacion = validarReferenciaNequi(nuevaReferencia)
+        setReferenciaError(validacion.valido ? "" : validacion.mensaje)
     }
 
     // Procesar pago
@@ -124,13 +100,11 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
             return
         }
 
-        // Si es Nequi, validar la referencia
-        if (metodoPago === "nequi") {
-            const validacion = validarReferenciaNequi(numeroReferencia)
-            if (!validacion.valido) {
-                setError(validacion.mensaje)
-                return
-            }
+        // Validar la referencia
+        const validacion = validarReferenciaNequi(numeroReferencia)
+        if (!validacion.valido) {
+            setError(validacion.mensaje)
+            return
         }
 
         setCargando(true)
@@ -141,14 +115,18 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
             // Simulamos una carga con un timeout
             await new Promise((resolve) => setTimeout(resolve, 1500))
 
+            // Crear un objeto URL para el comprobante (para poder descargarlo luego)
+            const comprobanteUrl = URL.createObjectURL(comprobante)
+
             // Información del pago para el backend
             const infoPago = {
-                metodoPago: metodoPago,
+                metodoPago: "nequi",
                 estado: "Pendiente", // El pago está pendiente de verificación
                 referencia: numeroReferencia,
                 fecha: new Date().toISOString(),
                 total: total,
                 comprobanteNombre: comprobante.name,
+                comprobanteUrl: comprobanteUrl, // Guardar URL para descargar
             }
 
             // Llamar a la función de pago completado
@@ -165,6 +143,20 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
         }
     }
 
+    // Descargar comprobante (para administradores)
+    const descargarComprobante = () => {
+        if (comprobante) {
+            const url = URL.createObjectURL(comprobante)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = comprobante.name
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+        }
+    }
+
     // Renderizar instrucciones según el método de pago
     const renderizarInstrucciones = () => {
         return (
@@ -175,8 +167,8 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                     <div className="paso">
                         <div className="paso-numero">1</div>
                         <div className="paso-contenido">
-                            <h4>Realiza la consignación o transferencia</h4>
-                            <p>Utiliza cualquiera de nuestras cuentas bancarias:</p>
+                            <h4>Realiza el pago a través de Nequi</h4>
+                            <p>Utiliza nuestra cuenta:</p>
 
                             <div className="cuentas-bancarias">
                                 {cuentasBancarias.map((cuenta, index) => (
@@ -190,9 +182,6 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                                         </p>
                                         <p>
                                             <strong>Titular:</strong> {cuenta.titular}
-                                        </p>
-                                        <p>
-                                            <strong>NIT:</strong> {cuenta.nit}
                                         </p>
                                     </div>
                                 ))}
@@ -212,7 +201,10 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                         <div className="paso-numero">3</div>
                         <div className="paso-contenido">
                             <h4>Sube tu comprobante</h4>
-                            <p>Sube el comprobante y proporciona el número de referencia de la transacción.</p>
+                            <p>
+                                Sube el comprobante y proporciona el código de referencia de la transacción (8 caracteres, inicia con
+                                M).
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -235,12 +227,12 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                 <h3>Subir Comprobante de Pago</h3>
 
                 <div className="campo-formulario">
-                    <label>Número de referencia o comprobante:</label>
+                    <label>Número de referencia de pago:</label>
                     <input
                         type="text"
                         value={numeroReferencia}
                         onChange={handleReferenciaChange}
-                        placeholder={metodoPago === "nequi" ? "12 dígitos" : "Ej: 123456789"}
+                        placeholder="Ej: M1234567"
                         className={referenciaError ? "input-error" : ""}
                         required
                     />
@@ -250,7 +242,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                             {referenciaError}
                         </div>
                     )}
-                    {metodoPago === "nequi" && !referenciaError && numeroReferencia && (
+                    {!referenciaError && numeroReferencia && (
                         <div className="referencia-valida">
                             <i className="fas fa-check-circle"></i>
                             Referencia válida
@@ -280,6 +272,11 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                     <div className="preview-comprobante">
                         <h4>Vista previa:</h4>
                         <img src={previewComprobante || "/placeholder.svg"} alt="Vista previa del comprobante" />
+                        {isAdmin && (
+                            <button type="button" className="descargar-button" onClick={descargarComprobante}>
+                                <i className="fas fa-download"></i> Descargar comprobante
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -320,20 +317,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                     <div className="metodos-pago">
                         <h3>Método de Pago</h3>
                         <div className="opciones-pago">
-                            <label className="opcion-pago">
-                                <input
-                                    type="radio"
-                                    name="metodoPago"
-                                    value="consignacion"
-                                    checked={metodoPago === "consignacion"}
-                                    onChange={handleMetodoPagoChange}
-                                />
-                                <div className="opcion-contenido">
-                                    <i className="fas fa-university"></i>
-                                    <span>Consignación Bancaria</span>
-                                </div>
-                            </label>
-
+                            {/* Solo mostramos Nequi como opción */}
                             <label className="opcion-pago">
                                 <input
                                     type="radio"

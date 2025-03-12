@@ -459,4 +459,16 @@ footer {
     width: 90%;
     max-width: 400px;
   }
+
+  /* Añadir estilos para el botón de Nequi en la navegación */
+  .nequi-button {
+    background-color: #00a1e4;
+    color: white;
+  }
+
+  .nequi-button:hover {
+    background-color: #0084bd;
+  }
+
+
 }

@@ -1,4 +1,6 @@
 "use client"
+import AdminPagos from "../src/componentes/AdminPagos"
+import AdminProductos from "./componentes/AdminProductos"
 
 import "./App.css"
 import "./hoja-de-estilos/Logo.css"
@@ -10,19 +12,37 @@ import AdminPanel from "./componentes/AdminPanel"
 import PedidosPanel from "./componentes/PedidosPanel"
 import MisPedidos from "./componentes/MisPedidos"
 import { useState, useEffect } from "react"
-import conjuntocalamar from "./imagenes/conjuto del juego del calamar.jpg"
-import conjuntocapucha from "./imagenes/Conjunto capucha de manga larga con estampado de estrellas y letras de Super Windom.jpg"
-import gorra from "./imagenes/gorra.jpg"
-import conjuntodeportivo from "./imagenes/Conjunto deportivo para Hombre.jpg"
-import conjuntoestampado from "./imagenes/Conjunto para hombres, con estampado de los angeles.jpg"
-import zapatosfoam from "./imagenes/Zapatos foam runner.jpg"
-import monedero from "./imagenes/monedero naruto.jpg"
+import conjuntocalamar from "./imagenes/conjuntocalamar/conjuntocalamar1.jpg"
+import conjuntocapucha from "../src/imagenes/conjuntocapucha/conjuntocapucha1.jpg"
+import gorra from "./imagenes/gorra/gorra1.jpg"
+import conjuntodeportivo from "./imagenes/conjuntodeportivo/conjuntodeportivo1.jpg"
+import conjuntonegro from "./imagenes/conjuntonegro/conjuntonegro1.jpg"
+import zapatosfoam from "../src/imagenes/zapatosfoam/zapatosfoam1.jpg"
+import monedero from "./imagenes/monedero/monedero1.jpg"
 import zapatoscorrer from "../src/imagenes/Zapatos deportivos para correr.jpg"
 import zapatoscasuales from "../src/imagenes/Zapatos Casuales Retro.jpg"
+
+
+// Importar imágenes adicionales para cada producto (ejemplo)
+import conjuntocalamar2 from "../src/imagenes/conjuntocalamar/conjuntocalamar2.jpg"// Asegúrate de tener estas imágenes
+import conjuntocalamar3 from "../src/imagenes/conjuntocalamar/conjuntocalamar3.jpg" // o reemplaza con rutas correctas
+import conjuntocapucha2 from "../src/imagenes/conjuntocapucha/conjuntocapucha2.jpg"
+import conjuntocapucha3 from "../src/imagenes/conjuntocapucha/conjuntocapucha3.jpg"
+import zapatosfoam2 from "../src/imagenes/zapatosfoam/zapatosfoam2.jpg"
+import zapatosfoam3 from "../src/imagenes/zapatosfoam/zapatosfoam3.jpg"
+import gorra2 from "./imagenes/gorra/gorra2.jpg"
+import gorra3 from "./imagenes/gorra/gorra3.jpg"
+import conjuntodeportivo2 from "./imagenes/conjuntodeportivo/conjuntodeportivo2.jpg"
+import conjuntodeportivo3 from "./imagenes/conjuntodeportivo/conjuntodeportivo3.jpg"
+import conjuntonegro2 from "./imagenes/conjuntonegro/conjuntonegro2.jpg"
+import conjuntonegro3 from "./imagenes/conjuntonegro/conjuntonegro3.jpg"
+import monedero2 from "./imagenes/monedero/monedero1.jpg"
+import monedero3 from "./imagenes/monedero/monedero3.jpg"
 
 // Importar los nuevos componentes en la parte superior del archivo
 import InformacionEnvio from "./componentes/InformacionEnvio"
 import PasarelaPago from "./componentes/PasarelaPago"
+import NequiConfigPanel from "./componentes/NequiConfigPanel"
 
 function App() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -35,6 +55,11 @@ function App() {
   const [mostrarPedidos, setMostrarPedidos] = useState(false)
   const [mostrarMisPedidos, setMostrarMisPedidos] = useState(false)
   const [usuario, setUsuario] = useState(null)
+  const [mostrarAdminPagos, setMostrarAdminPagos] = useState(false)
+  // Añadir el estado para mostrar el panel de configuración de Nequi
+  const [mostrarNequiConfig, setMostrarNequiConfig] = useState(false)
+  // Añadir el estado para mostrar el panel de administración de productos
+  const [mostrarAdminProductos, setMostrarAdminProductos] = useState(false)
 
   // Añadir nuevos estados para el flujo de pedido
   const [mostrarInfoEnvio, setMostrarInfoEnvio] = useState(false)
@@ -60,20 +85,37 @@ function App() {
   const todosLosProductos = [
     {
       imagen: conjuntocalamar,
+      imagenes: [
+        conjuntocalamar,
+        conjuntocalamar2, // Imagen adicional 1
+        conjuntocalamar3, // Imagen adicional 2
+      ],
       nombre: "Conjunto del juego del calamar",
       descripcion: "Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar.",
       precio: "$50.000",
       categoria: "Conjuntos",
+      colorUnico: "Unico", // Añadido colorUnico
     },
     {
       imagen: conjuntocapucha,
+      imagenes: [
+        conjuntocapucha,
+        conjuntocapucha2, // Imagen adicional 1
+        conjuntocapucha3, // Imagen adicional 2
+      ],
       nombre: "Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom",
       descripcion: "Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día.",
       precio: "$45.000",
       categoria: "Conjuntos",
+      colorUnico: "Unico", // Añadido colorUnico
     },
     {
       imagen: gorra,
+      imagenes: [
+        gorra,
+        gorra2,
+        gorra3
+      ],
       nombre: "Gorra",
       descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
       precio: "$60.000",
@@ -81,6 +123,11 @@ function App() {
     },
     {
       imagen: conjuntodeportivo,
+      imagenes: [
+        conjuntodeportivo,
+        conjuntodeportivo2,
+        conjuntodeportivo3
+      ],
       nombre: "Conjunto deportivo",
       descripcion:
         "Conjunto deportivo compuesto por camiseta de licra roja y shorts negros con diseño gráfico. Material de secado rápido, ideal para actividades acuáticas o al aire libre.",
@@ -88,15 +135,26 @@ function App() {
       categoria: "Conjuntos",
     },
     {
-      imagen: conjuntoestampado,
+      imagen: conjuntonegro,
+      imagenes: [
+        conjuntonegro,
+        conjuntonegro2,
+        conjuntonegro3
+      ],
       nombre: "Conjunto deportivo negro",
       descripcion:
         "Conjunto deportivo negro de dos piezas, compuesto por sudadera y pantalones ajustados. Ideal para uso casual o deportivo.",
       precio: "$90.000",
       categoria: "Conjuntos",
+      colorUnico: "Negro", // Añadido colorUnico
     },
     {
       imagen: zapatosfoam,
+      imagenes: [
+        zapatosfoam,
+        zapatosfoam2, // Imagen adicional 1
+        zapatosfoam3, // Imagen adicional 2
+      ],
       nombre: "Zapatos foam",
       descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
       precio: "$150.000",
@@ -104,6 +162,10 @@ function App() {
     },
     {
       imagen: monedero,
+      imagenes: [monedero,
+        monedero2,
+        monedero3
+      ],
       nombre: "Monedero de naruto",
       descripcion: "Monedero temático de Naruto, perfecto para fans del anime. Diseño práctico y duradero.",
       precio: "$80.000",
@@ -192,6 +254,26 @@ function App() {
 
   const toggleMisPedidos = () => {
     setMostrarMisPedidos(!mostrarMisPedidos)
+  }
+
+  const toggleAdminPagos = () => {
+    setMostrarAdminPagos(!mostrarAdminPagos)
+  }
+
+  // Añadir la función para mostrar/ocultar el panel de Nequi
+  const toggleNequiConfig = () => {
+    setMostrarNequiConfig(!mostrarNequiConfig)
+  }
+
+  // Añadir la función para mostrar/ocultar el panel de administración de productos
+  const toggleAdminProductos = () => {
+    setMostrarAdminProductos(!mostrarAdminProductos)
+  }
+
+  // Función para manejar productos agregados desde el panel de administración
+  const handleProductoAgregado = (nuevoProducto) => {
+    // Aquí puedes actualizar el estado de productos si es necesario
+    console.log("Producto agregado:", nuevoProducto)
   }
 
   const handleLogout = () => {
@@ -340,6 +422,16 @@ function App() {
                 <button className="boton-con-icono pedidos-button" onClick={togglePedidos}>
                   <i className="fas fa-shopping-bag"></i> Pedidos
                 </button>
+                <button className="boton-con-icono pagos-button" onClick={toggleAdminPagos}>
+                  <i className="fas fa-credit-card"></i> Pagos
+                </button>
+                <button className="boton-con-icono nequi-button" onClick={toggleNequiConfig}>
+                  <i className="fas fa-mobile-alt"></i> Nequi
+                </button>
+                {/* Agregar este nuevo botón para administrar productos */}
+                <button className="boton-con-icono productos-button" onClick={toggleAdminProductos}>
+                  <i className="fas fa-box"></i> Productos
+                </button>
               </>
             )}
 
@@ -452,6 +544,12 @@ function App() {
       {mostrarAdmin && <AdminPanel onClose={toggleAdmin} />}
       {mostrarPedidos && <PedidosPanel onClose={togglePedidos} />}
       {mostrarMisPedidos && usuario && <MisPedidos onClose={toggleMisPedidos} userId={usuario.id} />}
+      {mostrarAdminPagos && usuario && usuario.isAdmin && <AdminPagos onClose={toggleAdminPagos} />}
+      {mostrarNequiConfig && usuario && usuario.isAdmin && <NequiConfigPanel onClose={toggleNequiConfig} />}
+      {/* Agregar este componente para administrar productos */}
+      {mostrarAdminProductos && usuario && usuario.isAdmin && (
+        <AdminProductos onClose={toggleAdminProductos} onProductoAgregado={handleProductoAgregado} />
+      )}
 
       {mostrarInfoEnvio && (
         <InformacionEnvio total={calcularTotal()} onClose={cerrarInfoEnvio} onContinuarPago={handleContinuarPago} />
@@ -515,4 +613,3 @@ function App() {
 }
 
 export default App
-
