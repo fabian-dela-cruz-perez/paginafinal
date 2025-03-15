@@ -6,7 +6,7 @@ import "../hoja-de-estilos/NequiConfigPanel.css"
 function NequiConfigPanel({ onClose }) {
     const [config, setConfig] = useState({
         apiKey: "",
-        phoneNumber: "",
+        phoneNumber: "3114343835",
         callbackUrl: "",
         active: true,
     })

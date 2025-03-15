@@ -1,6 +1,8 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import "../hoja-de-estilos/AdminPanel.css"
+import { supabase } from "../utils/supabase.ts"
 
 function AdminPanel({ onClose }) {
     const [users, setUsers] = useState([])
@@ -10,38 +12,58 @@ function AdminPanel({ onClose }) {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                setLoading(true)
-                setError("")
+                // Verificar si el usuario actual es administrador
+                const {
+                    data: { user },
+                } = await supabase.auth.getUser()
 
-                const token = localStorage.getItem("token")
-                if (!token) {
-                    throw new Error("No hay token de autenticación")
+                if (!user) {
+                    throw new Error("No hay sesión de usuario")
                 }
 
-                const response = await fetch("http://localhost:5000/api/users", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                })
+                // Verificar si el usuario es administrador en la tabla usuarios
+                const { data: userData, error: userError } = await supabase
+                    .from("usuarios")
+                    .select("isadmin")
+                    .eq("email", user.email)
+                    .single()
 
-                if (!response.ok) {
-                    throw new Error("No se pudieron cargar los usuarios")
+                if (userError || !userData || !userData.isadmin) {
+                    throw new Error("No tienes permisos de administrador")
                 }
 
-                const data = await response.json()
-                setUsers(Array.isArray(data) ? data : [])
+                // Consultar usuarios de la tabla 'usuarios' en Supabase
+                const { data, error } = await supabase.from("usuarios").select("*")
+
+                if (error) {
+                    throw new Error("No se pudieron cargar los usuarios: " + error.message)
+                }
+
+                setUsers(data || [])
                 setLoading(false)
             } catch (error) {
                 console.error("Error al cargar usuarios:", error)
-                setError(error.message || "Error al cargar los usuarios. Por favor, intenta de nuevo.")
+                setError("Error al cargar los usuarios. Por favor, intenta de nuevo.")
                 setLoading(false)
             }
         }
 
         fetchUsers()
     }, [])
+
+    // Formatear fecha
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A"
+
+        const options = {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+        return new Date(dateString).toLocaleDateString("es-ES", options)
+    }
 
     return (
         <div className="admin-modal-overlay">
@@ -71,26 +93,19 @@ function AdminPanel({ onClose }) {
                                         <th>Nombre</th>
                                         <th>Apellido</th>
                                         <th>Email</th>
+                                        <th>Fecha de Registro</th>
                                         <th>Rol</th>
-                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {users && users.length > 0 ? (
+                                    {users.length > 0 ? (
                                         users.map((user) => (
                                             <tr key={user.id}>
-                                                <td>{user.nombre}</td>
-                                                <td>{user.apellido}</td>
+                                                <td>{user.nombre || "N/A"}</td>
+                                                <td>{user.apellido || "N/A"}</td>
                                                 <td>{user.email}</td>
-                                                <td>{user.isAdmin ? "Administrador" : "Usuario"}</td>
-                                                <td>
-                                                    <button className="btn-edit" onClick={() => console.log("Editar usuario:", user.id)}>
-                                                        <i className="fas fa-edit"></i> Editar
-                                                    </button>
-                                                    <button className="btn-delete" onClick={() => console.log("Eliminar usuario:", user.id)}>
-                                                        <i className="fas fa-trash"></i> Eliminar
-                                                    </button>
-                                                </td>
+                                                <td>{formatDate(user.fecharegistro)}</td>
+                                                <td>{user.isadmin ? "Administrador" : "Usuario"}</td>
                                             </tr>
                                         ))
                                     ) : (

@@ -1,17 +1,19 @@
 "use client"
+import "./App.css"
 import AdminPagos from "../src/componentes/AdminPagos"
 import AdminProductos from "./componentes/AdminProductos"
+import Navbar from "./componentes/NavBar.js" // Import the new Navbar component
 
-import "./App.css"
+
 import "./hoja-de-estilos/Logo.css"
-import SimpleSearchBar from "./componentes/Barra-de-busqueda"
 import "./hoja-de-estilos/Barra-de-busqueda.css"
-import Productos from "../src/componentes/Productos"
+import ProductosComponent from "../src/componentes/Productos"
 import LoginRegistro from "./componentes/LoginRegistro"
 import AdminPanel from "./componentes/AdminPanel"
 import PedidosPanel from "./componentes/PedidosPanel"
-import MisPedidos from "./componentes/MisPedidos"
+import MisPedidosComponent from "./componentes/MisPedidos"
 import { useState, useEffect } from "react"
+import { supabase } from "./utils/supabase.ts"
 import conjuntocalamar from "./imagenes/conjuntocalamar/conjuntocalamar1.jpg"
 import conjuntocapucha from "../src/imagenes/conjuntocapucha/conjuntocapucha1.jpg"
 import gorra from "./imagenes/gorra/gorra1.jpg"
@@ -22,9 +24,8 @@ import monedero from "./imagenes/monedero/monedero1.jpg"
 import zapatoscorrer from "../src/imagenes/Zapatos deportivos para correr.jpg"
 import zapatoscasuales from "../src/imagenes/Zapatos Casuales Retro.jpg"
 
-
 // Importar imágenes adicionales para cada producto (ejemplo)
-import conjuntocalamar2 from "../src/imagenes/conjuntocalamar/conjuntocalamar2.jpg"// Asegúrate de tener estas imágenes
+import conjuntocalamar2 from "../src/imagenes/conjuntocalamar/conjuntocalamar2.jpg" // Asegúrate de tener estas imágenes
 import conjuntocalamar3 from "../src/imagenes/conjuntocalamar/conjuntocalamar3.jpg" // o reemplaza con rutas correctas
 import conjuntocapucha2 from "../src/imagenes/conjuntocapucha/conjuntocapucha2.jpg"
 import conjuntocapucha3 from "../src/imagenes/conjuntocapucha/conjuntocapucha3.jpg"
@@ -55,6 +56,8 @@ function App() {
   const [mostrarPedidos, setMostrarPedidos] = useState(false)
   const [mostrarMisPedidos, setMostrarMisPedidos] = useState(false)
   const [usuario, setUsuario] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false) // Nuevo estado para verificar si es admin
+  const [loading, setLoading] = useState(true) // Estado para controlar la carga
   const [mostrarAdminPagos, setMostrarAdminPagos] = useState(false)
   // Añadir el estado para mostrar el panel de configuración de Nequi
   const [mostrarNequiConfig, setMostrarNequiConfig] = useState(false)
@@ -68,15 +71,77 @@ function App() {
   // const [datosEnvio, setDatosEnvio] = useState(null); // Se utilizará en futuras implementaciones
   const [infoPago, setInfoPago] = useState(null)
 
-  // Cargar usuario desde localStorage al iniciar
+  // Verificar sesión de usuario y permisos de administrador
   useEffect(() => {
-    const usuarioGuardado = localStorage.getItem("user")
-    if (usuarioGuardado) {
+    const checkUserSession = async () => {
       try {
-        setUsuario(JSON.parse(usuarioGuardado))
+        setLoading(true)
+
+        // Obtener sesión actual
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error("Error al obtener sesión:", sessionError)
+          return
+        }
+
+        if (!session) {
+          setUsuario(null)
+          setIsAdmin(false)
+          return
+        }
+
+        // Obtener datos del usuario
+        const { data: userData, error: userError } = await supabase.auth.getUser()
+
+        if (userError) {
+          console.error("Error al obtener usuario:", userError)
+          return
+        }
+
+        if (userData && userData.user) {
+          // Verificar si el usuario es administrador
+          const { data: adminData, error: adminError } = await supabase
+            .from("usuarios")
+            .select("*")
+            .eq("email", userData.user.email)
+            .single()
+
+          if (adminError) {
+            console.error("Error al verificar permisos:", adminError)
+          } else if (adminData) {
+            setUsuario({
+              id: adminData.id || userData.user.id,
+              email: adminData.email || userData.user.email,
+              nombre: adminData.nombre || "Usuario",
+              apellido: adminData.apellido || "",
+              isAdmin: adminData.isadmin || false,
+            })
+            setIsAdmin(adminData.isadmin || false)
+          }
+        }
       } catch (error) {
-        console.error("Error al parsear usuario:", error)
-        localStorage.removeItem("user")
+        console.error("Error en la verificación de sesión:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkUserSession()
+
+    // Configurar listener para cambios en la autenticación
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Estado de autenticación cambiado:", event)
+      checkUserSession()
+    })
+
+    // Limpiar listener al desmontar
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe()
       }
     }
   }, [])
@@ -111,11 +176,7 @@ function App() {
     },
     {
       imagen: gorra,
-      imagenes: [
-        gorra,
-        gorra2,
-        gorra3
-      ],
+      imagenes: [gorra, gorra2, gorra3],
       nombre: "Gorra",
       descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
       precio: "$60.000",
@@ -123,11 +184,7 @@ function App() {
     },
     {
       imagen: conjuntodeportivo,
-      imagenes: [
-        conjuntodeportivo,
-        conjuntodeportivo2,
-        conjuntodeportivo3
-      ],
+      imagenes: [conjuntodeportivo, conjuntodeportivo2, conjuntodeportivo3],
       nombre: "Conjunto deportivo",
       descripcion:
         "Conjunto deportivo compuesto por camiseta de licra roja y shorts negros con diseño gráfico. Material de secado rápido, ideal para actividades acuáticas o al aire libre.",
@@ -136,11 +193,7 @@ function App() {
     },
     {
       imagen: conjuntonegro,
-      imagenes: [
-        conjuntonegro,
-        conjuntonegro2,
-        conjuntonegro3
-      ],
+      imagenes: [conjuntonegro, conjuntonegro2, conjuntonegro3],
       nombre: "Conjunto deportivo negro",
       descripcion:
         "Conjunto deportivo negro de dos piezas, compuesto por sudadera y pantalones ajustados. Ideal para uso casual o deportivo.",
@@ -162,10 +215,7 @@ function App() {
     },
     {
       imagen: monedero,
-      imagenes: [monedero,
-        monedero2,
-        monedero3
-      ],
+      imagenes: [monedero, monedero2, monedero3],
       nombre: "Monedero de naruto",
       descripcion: "Monedero temático de Naruto, perfecto para fans del anime. Diseño práctico y duradero.",
       precio: "$80.000",
@@ -245,10 +295,18 @@ function App() {
   }
 
   const toggleAdmin = () => {
+    if (!isAdmin) {
+      alert("No tienes permisos de administrador para acceder a esta sección.")
+      return
+    }
     setMostrarAdmin(!mostrarAdmin)
   }
 
   const togglePedidos = () => {
+    if (!isAdmin) {
+      alert("No tienes permisos de administrador para acceder a esta sección.")
+      return
+    }
     setMostrarPedidos(!mostrarPedidos)
   }
 
@@ -257,16 +315,28 @@ function App() {
   }
 
   const toggleAdminPagos = () => {
+    if (!isAdmin) {
+      alert("No tienes permisos de administrador para acceder a esta sección.")
+      return
+    }
     setMostrarAdminPagos(!mostrarAdminPagos)
   }
 
   // Añadir la función para mostrar/ocultar el panel de Nequi
   const toggleNequiConfig = () => {
+    if (!isAdmin) {
+      alert("No tienes permisos de administrador para acceder a esta sección.")
+      return
+    }
     setMostrarNequiConfig(!mostrarNequiConfig)
   }
 
   // Añadir la función para mostrar/ocultar el panel de administración de productos
   const toggleAdminProductos = () => {
+    if (!isAdmin) {
+      alert("No tienes permisos de administrador para acceder a esta sección.")
+      return
+    }
     setMostrarAdminProductos(!mostrarAdminProductos)
   }
 
@@ -276,9 +346,15 @@ function App() {
     console.log("Producto agregado:", nuevoProducto)
   }
 
-  const handleLogout = () => {
-    setUsuario(null)
-    localStorage.removeItem("user")
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      setUsuario(null)
+      setIsAdmin(false)
+      localStorage.removeItem("user")
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error)
+    }
   }
 
   const calcularTotal = () => {
@@ -378,83 +454,41 @@ function App() {
     setMostrarCarrito(true)
   }
 
+  // Mostrar indicador de carga mientras se verifica la sesión
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="App">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-      <header>
-        <div>
-          <nav className="nav-atributos">
-            <div className="Logo">
-              <span>RTH</span>
-            </div>
-            <div>
-              <SimpleSearchBar onSearch={handleSearch} />
-            </div>
 
-            <button className="boton-con-icono">
-              <i className="fas fa-home"></i> Inicio
-            </button>
-
-            <div className="dropdown">
-              <button className="boton-con-icono" onClick={toggleDropdown}>
-                <i className="fas fa-tags"></i> Catálogo
-              </button>
-              {dropdownOpen && (
-                <div className="dropdown-content">
-                  <button onClick={() => handleCategoriaSeleccionada("Todos")}>Todos</button>
-                  <button onClick={() => handleCategoriaSeleccionada("Conjuntos")}>Conjuntos</button>
-                  <button onClick={() => handleCategoriaSeleccionada("Gorras")}>Gorras</button>
-                  <button onClick={() => handleCategoriaSeleccionada("Accesorios")}>Accesorios</button>
-                  <button onClick={() => handleCategoriaSeleccionada("Zapatos")}>Zapatos</button>
-                </div>
-              )}
-            </div>
-
-            <button className="boton-con-icono" onClick={toggleLogin}>
-              <i className="fas fa-user"></i> {usuario ? usuario.nombre : "Yo"}
-            </button>
-
-            {usuario && usuario.isAdmin && (
-              <>
-                <button className="boton-con-icono admin-button" onClick={toggleAdmin}>
-                  <i className="fas fa-users-cog"></i> Usuarios
-                </button>
-                <button className="boton-con-icono pedidos-button" onClick={togglePedidos}>
-                  <i className="fas fa-shopping-bag"></i> Pedidos
-                </button>
-                <button className="boton-con-icono pagos-button" onClick={toggleAdminPagos}>
-                  <i className="fas fa-credit-card"></i> Pagos
-                </button>
-                <button className="boton-con-icono nequi-button" onClick={toggleNequiConfig}>
-                  <i className="fas fa-mobile-alt"></i> Nequi
-                </button>
-                {/* Agregar este nuevo botón para administrar productos */}
-                <button className="boton-con-icono productos-button" onClick={toggleAdminProductos}>
-                  <i className="fas fa-box"></i> Productos
-                </button>
-              </>
-            )}
-
-            {usuario && !usuario.isAdmin && (
-              <button className="boton-con-icono mis-pedidos-button" onClick={toggleMisPedidos}>
-                <i className="fas fa-box"></i> Mis Pedidos
-              </button>
-            )}
-
-            {usuario && (
-              <button className="boton-con-icono" onClick={handleLogout}>
-                <i className="fas fa-sign-out-alt"></i> Cerrar sesión
-              </button>
-            )}
-
-            {!usuario?.isAdmin && (
-              <button className="boton-con-icono" onClick={toggleCarrito}>
-                <i className="fas fa-shopping-cart"></i> Carrito ({carrito.length})
-              </button>
-            )}
-          </nav>
-        </div>
-      </header>
+      {/* Use the new Navbar component */}
+      <Navbar
+        usuario={usuario}
+        isAdmin={isAdmin}
+        carrito={carrito}
+        toggleLogin={toggleLogin}
+        toggleAdmin={toggleAdmin}
+        togglePedidos={togglePedidos}
+        toggleAdminPagos={toggleAdminPagos}
+        toggleNequiConfig={toggleNequiConfig}
+        toggleAdminProductos={toggleAdminProductos}
+        toggleMisPedidos={toggleMisPedidos}
+        toggleCarrito={toggleCarrito}
+        handleLogout={handleLogout}
+        handleSearch={handleSearch}
+        toggleDropdown={toggleDropdown}
+        dropdownOpen={dropdownOpen}
+        handleCategoriaSeleccionada={handleCategoriaSeleccionada}
+      />
 
       <h2 className="centrar-texto">
         "RTH esencia te abre las puertas a una elección única
@@ -467,7 +501,7 @@ function App() {
       </div>
 
       {/* Renderizar todos los productos en un solo componente */}
-      <Productos
+      <ProductosComponent
         productos={todosLosProductos}
         searchTerm={searchTerm}
         categoriaSeleccionada={categoriaSeleccionada}
@@ -543,11 +577,11 @@ function App() {
       {mostrarLogin && <LoginRegistro onClose={toggleLogin} />}
       {mostrarAdmin && <AdminPanel onClose={toggleAdmin} />}
       {mostrarPedidos && <PedidosPanel onClose={togglePedidos} />}
-      {mostrarMisPedidos && usuario && <MisPedidos onClose={toggleMisPedidos} userId={usuario.id} />}
-      {mostrarAdminPagos && usuario && usuario.isAdmin && <AdminPagos onClose={toggleAdminPagos} />}
-      {mostrarNequiConfig && usuario && usuario.isAdmin && <NequiConfigPanel onClose={toggleNequiConfig} />}
+      {mostrarMisPedidos && usuario && <MisPedidosComponent onClose={toggleMisPedidos} userId={usuario.id} />}
+      {mostrarAdminPagos && usuario && isAdmin && <AdminPagos onClose={toggleAdminPagos} />}
+      {mostrarNequiConfig && usuario && isAdmin && <NequiConfigPanel onClose={toggleNequiConfig} />}
       {/* Agregar este componente para administrar productos */}
-      {mostrarAdminProductos && usuario && usuario.isAdmin && (
+      {mostrarAdminProductos && usuario && isAdmin && (
         <AdminProductos onClose={toggleAdminProductos} onProductoAgregado={handleProductoAgregado} />
       )}
 
@@ -613,3 +647,4 @@ function App() {
 }
 
 export default App
+

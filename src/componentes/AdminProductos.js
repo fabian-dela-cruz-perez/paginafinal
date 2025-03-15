@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react"
 import "../hoja-de-estilos/AdminProductos.css"
+import { supabase } from "../utils/supabase.ts"
 
 function AdminProductos({ onClose, onProductoAgregado }) {
     const [productos, setProductos] = useState([])
     const [mostrarFormulario, setMostrarFormulario] = useState(false)
     const [modoEdicion, setModoEdicion] = useState(false)
     const [productoActual, setProductoActual] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [isAdmin, setIsAdmin] = useState(false)
 
     // Estado para el formulario
     const [formData, setFormData] = useState({
@@ -20,17 +23,67 @@ function AdminProductos({ onClose, onProductoAgregado }) {
         imagenes: ["", "", ""],
     })
 
-    // Cargar productos al iniciar
+    // Verificar si el usuario es administrador
     useEffect(() => {
-        // Aquí podrías cargar los productos desde una API o localStorage
-        const productosGuardados = localStorage.getItem("productos")
-        if (productosGuardados) {
+        const checkAdmin = async () => {
             try {
-                setProductos(JSON.parse(productosGuardados))
+                const {
+                    data: { user },
+                } = await supabase.auth.getUser()
+
+                if (!user) {
+                    throw new Error("No hay sesión de usuario")
+                }
+
+                // Verificar si el usuario es administrador en la tabla usuarios
+                const { data, error } = await supabase.from("usuarios").select("isadmin").eq("email", user.email).single()
+
+                if (error || !data || !data.isadmin) {
+                    setIsAdmin(false)
+                    throw new Error("No tienes permisos de administrador")
+                }
+
+                setIsAdmin(true)
             } catch (error) {
-                console.error("Error al cargar productos:", error)
+                console.error("Error de verificación de admin:", error)
+                setIsAdmin(false)
             }
         }
+
+        checkAdmin()
+    }, [])
+
+    // Cargar productos desde Supabase al iniciar
+    useEffect(() => {
+        const fetchProductos = async () => {
+            try {
+                setLoading(true)
+                const { data, error } = await supabase.from("productos").select("*")
+
+                if (error) {
+                    throw error
+                }
+
+                if (data) {
+                    setProductos(data)
+                }
+            } catch (error) {
+                console.error("Error al cargar productos:", error)
+                // Si falla la carga desde Supabase, intentar cargar desde localStorage
+                const productosGuardados = localStorage.getItem("productos")
+                if (productosGuardados) {
+                    try {
+                        setProductos(JSON.parse(productosGuardados))
+                    } catch (error) {
+                        console.error("Error al cargar productos desde localStorage:", error)
+                    }
+                }
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchProductos()
     }, [])
 
     // Guardar productos cuando cambien
@@ -89,7 +142,7 @@ function AdminProductos({ onClose, onProductoAgregado }) {
         }
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
 
         // Validar campos obligatorios
@@ -112,29 +165,41 @@ function AdminProductos({ onClose, onProductoAgregado }) {
             imagenes: [formData.imagen, ...formData.imagenes.filter((img) => img.trim() !== "")],
         }
 
-        if (modoEdicion && productoActual) {
-            // Actualizar producto existente
-            const productosActualizados = productos.map((p) =>
-                p.id === productoActual.id ? { ...nuevoProducto, id: productoActual.id } : p,
-            )
-            setProductos(productosActualizados)
-        } else {
-            // Agregar nuevo producto
-            const productoConId = {
-                ...nuevoProducto,
-                id: Date.now().toString(), // ID único basado en timestamp
-            }
-            setProductos([...productos, productoConId])
+        try {
+            if (modoEdicion && productoActual) {
+                // Actualizar producto existente en Supabase
+                const { error } = await supabase.from("productos").update(nuevoProducto).eq("id", productoActual.id)
 
-            // Notificar al componente padre si existe la función
-            if (typeof onProductoAgregado === "function") {
-                onProductoAgregado(productoConId)
+                if (error) throw error
+
+                // Actualizar estado local
+                const productosActualizados = productos.map((p) =>
+                    p.id === productoActual.id ? { ...nuevoProducto, id: productoActual.id } : p,
+                )
+                setProductos(productosActualizados)
+            } else {
+                // Agregar nuevo producto a Supabase
+                const { data, error } = await supabase.from("productos").insert([nuevoProducto]).select()
+
+                if (error) throw error
+
+                // Actualizar estado local con el producto insertado
+                const productoConId = data[0]
+                setProductos([...productos, productoConId])
+
+                // Notificar al componente padre si existe la función
+                if (typeof onProductoAgregado === "function") {
+                    onProductoAgregado(productoConId)
+                }
             }
+
+            // Resetear formulario y cerrar
+            resetFormulario()
+            setMostrarFormulario(false)
+        } catch (error) {
+            console.error("Error al guardar producto:", error)
+            alert("Error al guardar el producto. Por favor, intenta de nuevo.")
         }
-
-        // Resetear formulario y cerrar
-        resetFormulario()
-        setMostrarFormulario(false)
     }
 
     const editarProducto = (producto) => {
@@ -160,10 +225,42 @@ function AdminProductos({ onClose, onProductoAgregado }) {
         setMostrarFormulario(true)
     }
 
-    const eliminarProducto = (id) => {
+    const eliminarProducto = async (id) => {
         if (window.confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-            setProductos(productos.filter((p) => p.id !== id))
+            try {
+                // Eliminar producto de Supabase
+                const { error } = await supabase.from("productos").delete().eq("id", id)
+
+                if (error) throw error
+
+                // Actualizar estado local
+                setProductos(productos.filter((p) => p.id !== id))
+            } catch (error) {
+                console.error("Error al eliminar producto:", error)
+                alert("Error al eliminar el producto. Por favor, intenta de nuevo.")
+            }
         }
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="admin-productos-modal">
+                <div className="admin-productos-content">
+                    <div className="admin-productos-header">
+                        <h2>Acceso Denegado</h2>
+                        <button className="cerrar-modal" onClick={onClose}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div className="admin-productos-body">
+                        <div className="error-message">
+                            <i className="fas fa-exclamation-triangle"></i>
+                            <p>No tienes permisos de administrador para acceder a esta sección.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -292,7 +389,11 @@ function AdminProductos({ onClose, onProductoAgregado }) {
 
                     <div className="lista-productos">
                         <h3>Productos Existentes ({productos.length})</h3>
-                        {productos.length === 0 ? (
+                        {loading ? (
+                            <div className="loading-spinner">
+                                <i className="fas fa-spinner fa-spin"></i> Cargando productos...
+                            </div>
+                        ) : productos.length === 0 ? (
                             <p className="no-productos">No hay productos registrados</p>
                         ) : (
                             <div className="tabla-productos">

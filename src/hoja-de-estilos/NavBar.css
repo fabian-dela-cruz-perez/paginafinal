@@ -1,0 +1,185 @@
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.navbar-logo img {
+    height: 40px;
+}
+
+.navbar-toggle {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.navbar-menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-item {
+    margin-left: 1.5rem;
+    position: relative;
+}
+
+.navbar-link {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar-link:hover {
+    color: #4f46e5;
+}
+
+.navbar-button {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 1rem;
+}
+
+.login {
+    background-color: #4f46e5;
+    color: #fff;
+    text-decoration: none;
+}
+
+.login:hover {
+    background-color: #4338ca;
+}
+
+.logout {
+    background-color: #f3f4f6;
+    color: #333;
+}
+
+.logout:hover {
+    background-color: #e5e7eb;
+}
+
+/* Menú de administrador */
+.admin-menu {
+    position: relative;
+}
+
+.admin-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.admin-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    padding: 0.5rem 0;
+    display: none;
+    z-index: 1000;
+}
+
+.admin-menu:hover .admin-dropdown {
+    display: block;
+}
+
+.admin-dropdown li {
+    list-style: none;
+}
+
+.admin-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.admin-dropdown a:hover {
+    background-color: #f3f4f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar-toggle {
+        display: block;
+    }
+
+    .navbar-menu {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 80%;
+        max-width: 300px;
+        height: 100vh;
+        background-color: #fff;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 2rem;
+        transition: right 0.3s ease;
+        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+    }
+
+    .navbar-menu.active {
+        right: 0;
+    }
+
+    .navbar-item {
+        margin: 1rem 0;
+        width: 100%;
+    }
+
+    .navbar-link {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0;
+    }
+
+    .navbar-button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .admin-dropdown {
+        position: static;
+        box-shadow: none;
+        display: none;
+        padding: 0;
+        margin-top: 0.5rem;
+    }
+
+    .admin-menu:hover .admin-dropdown {
+        display: block;
+    }
+
+    .admin-dropdown a {
+        padding-left: 1.5rem;
+    }
+}

@@ -1,369 +1,239 @@
 "use client"
 
-import { useState } from "react"
-import "../hoja-de-estilos/PasarelaPago.css"
+// Import necessary modules and libraries (e.g., React, Supabase client)
+import { useState, useEffect } from "react"
+import { supabase } from "../utils/supabase.ts" // Assuming you have a supabaseClient.js file
 
-function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio, isAdmin = false }) {
-    const [metodoPago, setMetodoPago] = useState("nequi")
-    const [comprobante, setComprobante] = useState(null)
-    const [numeroReferencia, setNumeroReferencia] = useState("")
-    const [mostrarInstrucciones, setMostrarInstrucciones] = useState(true)
-    const [cargando, setCargando] = useState(false)
-    const [error, setError] = useState("")
-    const [previewComprobante, setPreviewComprobante] = useState(null)
-    const [referenciaError, setReferenciaError] = useState("")
+function Pedidos() {
+    const [pedidos, setPedidos] = useState([])
+    const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
+    const [estadoSeleccionado, setEstadoSeleccionado] = useState("")
+    const [actualizandoEstado, setActualizandoEstado] = useState(false)
 
-    // Reducido a solo la cuenta Nequi
-    const cuentasBancarias = [
-        {
-            banco: "Nequi",
-            tipo: "Cuenta Digital",
-            numero: "300-123-4567",
-            titular: "RTH Esencia",
-        },
-    ]
+    useEffect(() => {
+        const obtenerPedidos = async () => {
+            try {
+                // Obtener pedidos desde Supabase
+                const { data, error } = await supabase
+                    .from("pedidos")
+                    .select(`
+                        *,
+                        usuario:usuario_id (
+                            nombre,
+                            email
+                        )
+                    `)
+                    .order("created_at", { ascending: false })
 
-    // Manejar cambio de método de pago - Solo tenemos Nequi pero mantenemos por si en futuro se agregan más
-    const handleMetodoPagoChange = (e) => {
-        setMetodoPago(e.target.value)
-        setMostrarInstrucciones(true)
-    }
+                if (error) {
+                    throw error
+                }
 
-    // Manejar carga de comprobante
-    const handleComprobanteChange = (e) => {
-        const file = e.target.files[0]
-        if (file) {
-            setComprobante(file)
+                // Formatear pedidos
+                const pedidosFormateados = data.map((pedido) => ({
+                    id: pedido.id,
+                    usuario: pedido.usuario,
+                    estado: pedido.estado,
+                    total: pedido.total,
+                    direccionEnvio: pedido.direccion_envio,
+                    created_at: pedido.fecha_pedido,
+                    updated_at: pedido.fecha_actualizacion,
+                    // ... otros campos necesarios
+                }))
 
-            // Crear preview del comprobante
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                setPreviewComprobante(reader.result)
+                // Obtener productos para cada pedido
+                const pedidosConProductos = await Promise.all(
+                    pedidosFormateados.map(async (pedido) => {
+                        const { data: productos, error: productosError } = await supabase
+                            .from("pedido_productos")
+                            .select(`
+                                *,
+                                producto:producto_id (
+                                    nombre
+                                )
+                            `)
+                            .eq("pedido_id", pedido.id)
+
+                        if (productosError) {
+                            console.error("Error al obtener productos del pedido:", productosError)
+                            return {
+                                ...pedido,
+                                productos: [],
+                            }
+                        }
+
+                        // Formatear productos
+                        const productosFormateados = productos.map((item) => ({
+                            nombre: item.producto ? item.producto.nombre : "Producto no disponible",
+                            precio: item.precio || "$0",
+                            cantidad: item.cantidad || 1,
+                            color: item.color || "N/A",
+                            talla: item.talla || "N/A",
+                        }))
+
+                        return {
+                            ...pedido,
+                            productos: productosFormateados,
+                        }
+                    }),
+                )
+
+                setPedidos(pedidosConProductos)
+            } catch (error) {
+                console.error("Error al obtener pedidos:", error)
+                alert("Error al obtener los pedidos: " + error.message)
             }
-            reader.readAsDataURL(file)
-        }
-    }
-
-    // Validar formulario
-    const validarFormulario = () => {
-        if (!comprobante) {
-            setError("Por favor, sube un comprobante de pago")
-            return false
         }
 
-        if (!numeroReferencia.trim()) {
-            setError("Por favor, ingresa el número de referencia o comprobante")
-            return false
-        }
+        obtenerPedidos()
+    }, [])
 
-        return true
-    }
-
-    // Validar referencia según el nuevo formato: M seguido de 7 números (total 8 caracteres)
-    const validarReferenciaNequi = (referencia) => {
-        // Validar formato: M seguido de números
-        if (!/^M\d+$/.test(referencia)) {
-            return {
-                valido: false,
-                mensaje: "La referencia debe comenzar con 'M' seguida de números",
-            }
-        }
-
-        // Validar longitud (8 caracteres)
-        if (referencia.length !== 8) {
-            return {
-                valido: false,
-                mensaje: "La referencia debe tener exactamente 8 caracteres",
-            }
-        }
-
-        return {
-            valido: true,
-            mensaje: "Referencia válida",
-        }
-    }
-
-    const handleReferenciaChange = (e) => {
-        const nuevaReferencia = e.target.value
-        setNumeroReferencia(nuevaReferencia)
-
-        // Siempre validamos con el formato de Nequi ya que es el único método de pago
-        const validacion = validarReferenciaNequi(nuevaReferencia)
-        setReferenciaError(validacion.valido ? "" : validacion.mensaje)
-    }
-
-    // Procesar pago
-    const procesarPago = async (e) => {
-        e.preventDefault()
-
-        if (!validarFormulario()) {
+    const actualizarEstadoPedido = async () => {
+        if (!pedidoSeleccionado || estadoSeleccionado === pedidoSeleccionado.estado) {
             return
         }
 
-        // Validar la referencia
-        const validacion = validarReferenciaNequi(numeroReferencia)
-        if (!validacion.valido) {
-            setError(validacion.mensaje)
-            return
-        }
-
-        setCargando(true)
-        setError("")
+        setActualizandoEstado(true)
 
         try {
-            // En un sistema real, aquí subirías el comprobante a un servidor
-            // Simulamos una carga con un timeout
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            // Actualizar en Supabase
+            const { error } = await supabase
+                .from("pedidos")
+                .update({
+                    estado: estadoSeleccionado,
+                    fecha_actualizacion: new Date().toISOString(),
+                })
+                .eq("id", pedidoSeleccionado.id)
 
-            // Crear un objeto URL para el comprobante (para poder descargarlo luego)
-            const comprobanteUrl = URL.createObjectURL(comprobante)
+            if (error) throw error
 
-            // Información del pago para el backend
-            const infoPago = {
-                metodoPago: "nequi",
-                estado: "Pendiente", // El pago está pendiente de verificación
-                referencia: numeroReferencia,
-                fecha: new Date().toISOString(),
-                total: total,
-                comprobanteNombre: comprobante.name,
-                comprobanteUrl: comprobanteUrl, // Guardar URL para descargar
-            }
+            // Actualizar el pedido en la lista
+            setPedidos(
+                pedidos.map((p) =>
+                    p.id === pedidoSeleccionado.id
+                        ? {
+                            ...p,
+                            estado: estadoSeleccionado,
+                            updated_at: new Date().toISOString(),
+                        }
+                        : p,
+                ),
+            )
 
-            // Llamar a la función de pago completado
-            onPagoCompletado(infoPago)
+            // Actualizar el pedido seleccionado
+            setPedidoSeleccionado({
+                ...pedidoSeleccionado,
+                estado: estadoSeleccionado,
+                updated_at: new Date().toISOString(),
+            })
 
-            // Mostrar mensaje de éxito
-            alert("Tu comprobante ha sido enviado. Tu pedido está en proceso de verificación.")
-            onClose()
+            alert("Estado del pedido actualizado correctamente")
         } catch (error) {
-            console.error("Error al procesar el pago:", error)
-            setError("Ocurrió un error al procesar tu pago. Por favor, intenta de nuevo.")
+            console.error("Error al actualizar estado:", error)
+            alert("Error al actualizar el estado del pedido: " + error.message)
         } finally {
-            setCargando(false)
+            setActualizandoEstado(false)
         }
     }
 
-    // Descargar comprobante (para administradores)
-    const descargarComprobante = () => {
-        if (comprobante) {
-            const url = URL.createObjectURL(comprobante)
-            const a = document.createElement("a")
-            a.href = url
-            a.download = comprobante.name
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            URL.revokeObjectURL(url)
+    const eliminarPedido = async () => {
+        if (!pedidoSeleccionado) {
+            return
+        }
+
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este pedido? Esta acción no se puede deshacer.")) {
+            return
+        }
+
+        try {
+            // Primero eliminar los productos asociados
+            await supabase.from("pedido_productos").delete().eq("pedido_id", pedidoSeleccionado.id)
+
+            // Luego eliminar el pedido
+            await supabase.from("pedidos").delete().eq("id", pedidoSeleccionado.id)
+
+            // Eliminar el pedido de la lista
+            setPedidos(pedidos.filter((p) => p.id !== pedidoSeleccionado.id))
+
+            // Cerrar detalles
+            cerrarDetalles()
+
+            alert("Pedido eliminado correctamente. Se ha notificado al usuario.")
+        } catch (error) {
+            console.error("Error al eliminar pedido:", error)
+            alert("Error al eliminar el pedido: " + error.message)
         }
     }
 
-    // Renderizar instrucciones según el método de pago
-    const renderizarInstrucciones = () => {
-        return (
-            <div className="instrucciones-pago">
-                <h3>Instrucciones de Pago</h3>
-
-                <div className="pasos-pago">
-                    <div className="paso">
-                        <div className="paso-numero">1</div>
-                        <div className="paso-contenido">
-                            <h4>Realiza el pago a través de Nequi</h4>
-                            <p>Utiliza nuestra cuenta:</p>
-
-                            <div className="cuentas-bancarias">
-                                {cuentasBancarias.map((cuenta, index) => (
-                                    <div key={index} className="cuenta-bancaria">
-                                        <h5>{cuenta.banco}</h5>
-                                        <p>
-                                            <strong>Tipo:</strong> {cuenta.tipo}
-                                        </p>
-                                        <p>
-                                            <strong>Número:</strong> {cuenta.numero}
-                                        </p>
-                                        <p>
-                                            <strong>Titular:</strong> {cuenta.titular}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="paso">
-                        <div className="paso-numero">2</div>
-                        <div className="paso-contenido">
-                            <h4>Guarda tu comprobante</h4>
-                            <p>Toma una foto clara o guarda el PDF de tu comprobante de pago.</p>
-                        </div>
-                    </div>
-
-                    <div className="paso">
-                        <div className="paso-numero">3</div>
-                        <div className="paso-contenido">
-                            <h4>Sube tu comprobante</h4>
-                            <p>
-                                Sube el comprobante y proporciona el código de referencia de la transacción (8 caracteres, inicia con
-                                M).
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="total-a-pagar">
-                    <h3>Total a pagar: ${total.toLocaleString("es-ES")}</h3>
-                </div>
-
-                <button className="continuar-button" onClick={() => setMostrarInstrucciones(false)}>
-                    Continuar
-                </button>
-            </div>
-        )
+    const cerrarDetalles = () => {
+        setPedidoSeleccionado(null)
     }
 
-    // Renderizar formulario de comprobante
-    const renderizarFormularioComprobante = () => {
-        return (
-            <form onSubmit={procesarPago} className="formulario-comprobante">
-                <h3>Subir Comprobante de Pago</h3>
+    // Placeholder functions for event handlers and rendering
+    const handlePedidoClick = (pedido) => {
+        setPedidoSeleccionado(pedido)
+        setEstadoSeleccionado(pedido.estado)
+    }
 
-                <div className="campo-formulario">
-                    <label>Número de referencia de pago:</label>
-                    <input
-                        type="text"
-                        value={numeroReferencia}
-                        onChange={handleReferenciaChange}
-                        placeholder="Ej: M1234567"
-                        className={referenciaError ? "input-error" : ""}
-                        required
-                    />
-                    {referenciaError && (
-                        <div className="error-mensaje">
-                            <i className="fas fa-exclamation-circle"></i>
-                            {referenciaError}
-                        </div>
-                    )}
-                    {!referenciaError && numeroReferencia && (
-                        <div className="referencia-valida">
-                            <i className="fas fa-check-circle"></i>
-                            Referencia válida
-                        </div>
-                    )}
-                </div>
-
-                <div className="campo-formulario">
-                    <label>Comprobante de pago:</label>
-                    <div className="upload-area">
-                        <input
-                            type="file"
-                            id="comprobante"
-                            accept=".jpg,.jpeg,.png,.pdf"
-                            onChange={handleComprobanteChange}
-                            className="file-input"
-                        />
-                        <label htmlFor="comprobante" className="file-label">
-                            <i className="fas fa-upload"></i>
-                            {comprobante ? comprobante.name : "Seleccionar archivo"}
-                        </label>
-                    </div>
-                    <p className="formato-permitido">Formatos permitidos: JPG, PNG, PDF (máx. 5MB)</p>
-                </div>
-
-                {previewComprobante && (
-                    <div className="preview-comprobante">
-                        <h4>Vista previa:</h4>
-                        <img src={previewComprobante || "/placeholder.svg"} alt="Vista previa del comprobante" />
-                        {isAdmin && (
-                            <button type="button" className="descargar-button" onClick={descargarComprobante}>
-                                <i className="fas fa-download"></i> Descargar comprobante
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                {error && <div className="error-mensaje">{error}</div>}
-
-                <div className="botones-accion">
-                    <button type="button" className="volver-button" onClick={() => setMostrarInstrucciones(true)}>
-                        <i className="fas fa-arrow-left"></i> Volver
-                    </button>
-
-                    <button type="submit" className="confirmar-button" disabled={cargando}>
-                        {cargando ? (
-                            <>
-                                <i className="fas fa-spinner fa-spin"></i> Procesando...
-                            </>
-                        ) : (
-                            <>
-                                <i className="fas fa-check"></i> Confirmar Pago
-                            </>
-                        )}
-                    </button>
-                </div>
-            </form>
-        )
+    const handleEstadoChange = (e) => {
+        setEstadoSeleccionado(e.target.value)
     }
 
     return (
-        <div className="pasarela-pago-overlay">
-            <div className="pasarela-pago-modal">
-                <div className="pasarela-header">
-                    <h2>Pago de tu Pedido</h2>
-                    <button className="close-button" onClick={onClose}>
-                        <i className="fas fa-times"></i>
-                    </button>
+        <div>
+            <h1>Lista de Pedidos</h1>
+            {pedidos.map((pedido) => (
+                <div key={pedido.id} onClick={() => handlePedidoClick(pedido)}>
+                    Pedido ID: {pedido.id}, Estado: {pedido.estado}
                 </div>
+            ))}
 
-                <div className="pasarela-content">
-                    <div className="metodos-pago">
-                        <h3>Método de Pago</h3>
-                        <div className="opciones-pago">
-                            {/* Solo mostramos Nequi como opción */}
-                            <label className="opcion-pago">
-                                <input
-                                    type="radio"
-                                    name="metodoPago"
-                                    value="nequi"
-                                    checked={metodoPago === "nequi"}
-                                    onChange={handleMetodoPagoChange}
-                                />
-                                <div className="opcion-contenido">
-                                    <i className="fas fa-mobile-alt"></i>
-                                    <span>Nequi</span>
-                                </div>
-                            </label>
-                        </div>
+            {pedidoSeleccionado && (
+                <div>
+                    <h2>Detalles del Pedido</h2>
+                    <p>ID: {pedidoSeleccionado.id}</p>
+                    <p>
+                        Usuario: {pedidoSeleccionado.usuario?.nombre} ({pedidoSeleccionado.usuario?.email})
+                    </p>
+                    <p>Estado: {pedidoSeleccionado.estado}</p>
+                    <p>Total: {pedidoSeleccionado.total}</p>
+                    <p>Dirección de Envío: {pedidoSeleccionado.direccionEnvio}</p>
+                    <p>Fecha de Pedido: {pedidoSeleccionado.created_at}</p>
+                    <p>Fecha de Actualización: {pedidoSeleccionado.updated_at}</p>
+
+                    <h3>Productos:</h3>
+                    <ul>
+                        {pedidoSeleccionado.productos.map((producto, index) => (
+                            <li key={index}>
+                                {producto.nombre} - Precio: {producto.precio}, Cantidad: {producto.cantidad}, Color: {producto.color},
+                                Talla: {producto.talla}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div>
+                        <label>
+                            Nuevo Estado:
+                            <select value={estadoSeleccionado} onChange={handleEstadoChange}>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en_proceso">En Proceso</option>
+                                <option value="enviado">Enviado</option>
+                                <option value="entregado">Entregado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </label>
+                        <button onClick={actualizarEstadoPedido} disabled={actualizandoEstado}>
+                            {actualizandoEstado ? "Actualizando..." : "Actualizar Estado"}
+                        </button>
                     </div>
 
-                    <div className="detalles-pago">
-                        {mostrarInstrucciones ? renderizarInstrucciones() : renderizarFormularioComprobante()}
-                    </div>
+                    <button onClick={eliminarPedido}>Eliminar Pedido</button>
+                    <button onClick={cerrarDetalles}>Cerrar Detalles</button>
                 </div>
-
-                <div className="pasarela-footer">
-                    <div className="resumen-pedido">
-                        <div className="resumen-item">
-                            <span>Subtotal:</span>
-                            <span>${total.toLocaleString("es-ES")}</span>
-                        </div>
-                        <div className="resumen-item">
-                            <span>Envío:</span>
-                            <span>Gratis</span>
-                        </div>
-                        <div className="resumen-item total">
-                            <span>Total:</span>
-                            <span>${total.toLocaleString("es-ES")}</span>
-                        </div>
-                    </div>
-
-                    <div className="direccion-envio">
-                        <h4>Dirección de Envío:</h4>
-                        <p>{direccionEnvio}</p>
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     )
 }
 
-export default PasarelaPago
+export default Pedidos
 

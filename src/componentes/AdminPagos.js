@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import "../hoja-de-estilos/AdminPagos.css"
+import "../hoja-de-estilos/PedidosPanel.css"
 
 function AdminPagos({ onClose }) {
     const [pagos, setPagos] = useState([])

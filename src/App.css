@@ -470,5 +470,760 @@ footer {
     background-color: #0084bd;
   }
 
+  /* Estilos para el menú de administrador */
+  .admin-menu {
+    position: relative;
+  }
+
+  .admin-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    padding: 8px;
+    z-index: 1000;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .admin-menu:hover .admin-dropdown {
+    display: block;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .admin-dropdown button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: none;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+  }
+
+  .admin-dropdown button:last-child {
+    margin-bottom: 0;
+  }
+
+  .admin-dropdown button i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+    color: #ff5636;
+  }
+
+  .admin-dropdown button:hover {
+    background-color: #fff5f3;
+    color: #ff5636;
+  }
+
+  /* Estilos específicos para cada botón del menú admin */
+  .admin-dropdown button.usuarios {
+    border-left: 3px solid #4a90e2;
+  }
+
+  .admin-dropdown button.pedidos {
+    border-left: 3px solid #50c878;
+  }
+
+  .admin-dropdown button.pagos {
+    border-left: 3px solid #ffd700;
+  }
+
+  .admin-dropdown button.nequi {
+    border-left: 3px solid #00a1e4;
+  }
+
+  .admin-dropdown button.productos {
+    border-left: 3px solid #ff7043;
+  }
+
+  /* Animación para el dropdown */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Estilo para el botón principal de Admin */
+  /* Añade estos estilos al final de tu archivo App.css */
+
+  .admin-menu {
+    position: relative;
+    display: inline-block;
+  }
+
+  .admin-button {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .admin-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    z-index: 1000;
+    margin-top: 5px;
+    padding: 8px;
+    display: none;
+  }
+
+  .admin-menu:hover .admin-dropdown {
+    display: block;
+  }
+
+  .admin-dropdown-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-align: left;
+  }
+
+  .admin-dropdown-button:hover {
+    background-color: #ff5636;
+    color: white;
+  }
+
+  .admin-dropdown-button i {
+    margin-right: 10px;
+    width: 20px;
+    font-size: 16px;
+  }
+
+  .admin-dropdown-button span {
+    flex: 1;
+  }
+
+  /* Añade una flecha al dropdown */
+  .admin-dropdown::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    right: 20px;
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    transform: rotate(45deg);
+  }
+
+  /* Estilos responsivos */
+  @media (max-width: 768px) {
+    .admin-dropdown {
+      position: static;
+      box-shadow: none;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .admin-dropdown::before {
+      display: none;
+    }
+  }
+
+  * {
+    margin: 0 auto;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .nav-atributos {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ff4d2d;
+    padding: 15px 50px;
+    height: 100px;
+    width: 100%;
+  }
+
+  .Logo {
+    font-size: 24px;
+    color: white;
+    padding-left: 20px;
+  }
+
+  .ajustar {
+    width: 100%;
+    padding: 20px 70px;
+    /* Match the logo's position */
+    text-align: left;
+    max-width: 100%;
+    margin: 0;
+    height: auto;
+  }
+
+  .ajustar h1 {
+    margin: 0;
+    /* Remove default margin */
+    font-size: 28px;
+    color: #333;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  .centrar-texto {
+    display: flex;
+    justify-content: center;
+    /* Centrar horizontalmente */
+    align-items: center;
+    /* Centrar verticalmente */
+    height: 100px;
+    /* Establece una altura para ver el efecto */
+  }
+
+  .estilo-footer {
+    margin-top: 10px;
+    /* Ajusta el valor según sea necesario */
+    padding: 100px;
+    text-align: center;
+    background-color: #ff4d2d;
+  }
+
+  .contenedor {
+    max-width: 1280px;
+    padding: 0 1rem;
+  }
+
+  .button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+
+  .button:hover {
+    color: yellow;
+  }
+
+  .formato-imagen {
+    height: 60px;
+  }
+
+  .formato-cajita-imagen {
+    margin-left: -15px;
+  }
+
+  footer {
+    background-color: #ff5636;
+    color: #fff;
+    padding: 40px 0;
+  }
+
+  .footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0 40px;
+  }
+
+  .footer-left {
+    flex: 1;
+    font-size: 18px;
+    font-style: italic;
+    color: #ccc;
+  }
+
+  .footer-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .footer-center ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .footer-center ul li {
+    display: inline-block;
+  }
+
+  .footer-center ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s ease;
+  }
+
+  .footer-center ul li a:hover {
+    color: #ff5636;
+  }
+
+  .footer-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+  }
+
+  .social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 20px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .social-icon:hover {
+    background-color: #fff;
+    color: #ff5636;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .social-icon::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0);
+    transition: transform 0.5s ease;
+    border-radius: 50%;
+  }
+
+  .social-icon:hover::before {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+
+  .social-icon i {
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer-bottom {
+    text-align: center;
+    padding: 20px 0;
+    background-color: #ff5636;
+    font-size: 14px;
+    margin-top: 50px;
+    /* Espacio extra entre el footer principal y la parte inferior */
+  }
+
+  .footer-bottom p {
+    margin: 0;
+    color: #ccc;
+  }
+
+  /* Estilos generales para botones */
+  .boton-con-icono {
+    background-color: #ff5636;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 25px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .boton-con-icono i {
+    margin-right: 8px;
+  }
+
+  /* Hover y efecto de sombra */
+  .boton-con-icono:hover {
+    background-color: #ff5636;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Estilos para el dropdown */
+  .dropdown-content {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    background-color: #f1f1f1;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1;
+    min-width: 160px;
+  }
+
+  /* Botones dentro del dropdown */
+  .dropdown-content button {
+    background-color: #f1f1f1;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Hover para los botones del dropdown */
+  .dropdown-content button:hover {
+    background-color: #ff5636;
+    color: white;
+  }
+
+  /* Asegura que el dropdown aparezca de manera correcta */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .dropdown-content {
+    display: none;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: flex;
+  }
+
+  .carrito-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .carrito-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .carrito-imagen {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 10px;
+  }
+
+  .carrito-detalles {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cerrar-carrito {
+    background-color: #ff5f5f;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .cerrar-carrito:hover {
+    background-color: #e04a4a;
+  }
+
+  .eliminar-producto {
+    background-color: #ff5f5f;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-left: 10px;
+  }
+
+  .eliminar-producto:hover {
+    background-color: #e04a4a;
+  }
+
+  .producto-carrito {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .carrito-total {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  /* Estilos para el botón de administrador */
+  .admin-button {
+    background-color: #4a6fa5;
+  }
+
+  .admin-button:hover {
+    background-color: #3a5a8c;
+  }
+
+  /* Estilos para el botón de pedidos */
+  .pedidos-button {
+    background-color: #5a9a5a;
+  }
+
+  .pedidos-button:hover {
+    background-color: #4a8a4a;
+  }
+
+  /* Estilos para el botón de mis pedidos */
+  .mis-pedidos-button {
+    background-color: #9a5a9a;
+  }
+
+  .mis-pedidos-button:hover {
+    background-color: #8a4a8a;
+  }
+
+  /* Estilos para el botón de proceder al pago */
+  .proceder-pago {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+    text-align: center;
+    border-radius: 5px;
+    font-weight: bold;
+  }
+
+  .proceder-pago:hover {
+    background-color: #45a049;
+  }
+
+  .proceder-pago:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  /* Estilos para la lista de carrito */
+  .carrito-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .carrito-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+
+  .carrito-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .carrito-contador {
+    background-color: #ff5636;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+  }
+
+  .carrito-botones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .carrito-empty {
+    text-align: center;
+    padding: 30px 0;
+    color: #666;
+  }
+
+  /* Estilos para el menú de administrador */
+  .admin-menu {
+    position: relative;
+  }
+
+  .admin-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    padding: 8px;
+    z-index: 1000;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .admin-menu:hover .admin-dropdown {
+    display: block;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .admin-dropdown-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: none;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+  }
+
+  .admin-dropdown-button:last-child {
+    margin-bottom: 0;
+  }
+
+  .admin-dropdown-button i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+    color: #ff5636;
+  }
+
+  .admin-dropdown-button:hover {
+    background-color: #fff5f3;
+    color: #ff5636;
+  }
+
+  /* Estilos específicos para cada botón del menú admin */
+  .admin-dropdown-button.usuarios {
+    border-left: 3px solid #4a90e2;
+  }
+
+  .admin-dropdown-button.pedidos {
+    border-left: 3px solid #50c878;
+  }
+
+  .admin-dropdown-button.pagos {
+    border-left: 3px solid #ffd700;
+  }
+
+  .admin-dropdown-button.nequi {
+    border-left: 3px solid #00a1e4;
+  }
+
+  .admin-dropdown-button.productos {
+    border-left: 3px solid #ff7043;
+  }
+
+  /* Animación para el dropdown */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Ajuste del dropdown para mejor alineación */
+  .admin-dropdown::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    width: 12px;
+    height: 12px;
+    background-color: white;
+    transform: rotate(45deg);
+    box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    .nav-atributos {
+      padding: 15px 20px;
+      flex-wrap: wrap;
+    }
+
+    .boton-con-icono {
+      margin: 5px;
+      font-size: 14px;
+      padding: 8px 15px;
+    }
+
+    .carrito-content {
+      width: 90%;
+      max-width: 400px;
+    }
+
+    /* Añadir estilos para el botón de Nequi en la navegación */
+    .nequi-button {
+      background-color: #00a1e4;
+      color: white;
+    }
+
+    .nequi-button:hover {
+      background-color: #0084bd;
+    }
+  }
+
+
+
+
+
 
 }
