@@ -55,8 +55,11 @@ function InformacionEnvio({ total, onClose, onContinuarPago }) {
             // Formatear la dirección completa
             const direccionCompleta = `${formData.direccion}, ${formData.ciudad}, ${formData.departamento}${formData.codigoPostal ? ", CP: " + formData.codigoPostal : ""}`
 
-            // Pasar los datos al componente padre
-            onContinuarPago(direccionCompleta, formData)
+            // Pasar los datos al componente padre, incluyendo toda la información de envío
+            onContinuarPago({
+                ...formData,
+                direccionCompleta,
+            })
         }
     }
 
@@ -199,4 +202,3 @@ function InformacionEnvio({ total, onClose, onContinuarPago }) {
 }
 
 export default InformacionEnvio
-

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import "../hoja-de-estilos/PedidosPanel.css"
+import { supabase } from "../utils/supabase.ts"
+import "../hoja-de-estilos/AdminPagos.css"
 
 function AdminPagos({ onClose }) {
     const [pagos, setPagos] = useState([])
@@ -9,35 +10,53 @@ function AdminPagos({ onClose }) {
     const [error, setError] = useState(null)
     const [filtro, setFiltro] = useState("todos")
 
-    // Cargar pagos del servidor
+    // Cargar pagos
     useEffect(() => {
         const cargarPagos = async () => {
             try {
                 setCargando(true)
-                // Obtener pagos de todos los pedidos
-                const response = await fetch("http://localhost:5000/api/pedidos")
 
-                if (!response.ok) {
-                    throw new Error("No se pudieron cargar los pagos")
+                // Obtener pedidos con información de pago
+                const { data, error } = await supabase
+                    .from("pedidos")
+                    .select(`
+                        id,
+                        usuario_id,
+                        total,
+                        metodo_pago,
+                        referencia_pago,
+                        comprobante_url,
+                        estado,
+                        fecha_pedido,
+                        usuarios:usuario_id (
+                            nombre,
+                            email
+                        )
+                    `)
+                    .not("metodo_pago", "is", null)
+                    .order("fecha_pedido", { ascending: false })
+
+                if (error) {
+                    throw error
                 }
 
-                const pedidos = await response.json()
-
-                // Extraer la información de pago de cada pedido
-                const pagosDePedidos = pedidos.map((pedido) => ({
-                    _id: pedido._id,
-                    pedidoId: pedido._id,
-                    metodoPago: pedido.pago.metodoPago,
-                    estado: pedido.pago.estado,
-                    referencia: pedido.pago.referencia,
-                    fecha: pedido.pago.fecha,
+                // Formatear datos de pagos
+                const pagosProcesados = data.map((pedido) => ({
+                    id: pedido.id,
+                    pedidoId: pedido.id,
+                    metodoPago: pedido.metodo_pago,
+                    estado: pedido.estado,
+                    referencia: pedido.referencia_pago || "N/A",
+                    fecha: pedido.fecha_pedido,
                     total: pedido.total,
-                    comprobanteUrl: pedido.pago.comprobanteUrl,
-                    comprobanteNombre: pedido.pago.comprobanteNombre,
-                    usuario: pedido.usuario.nombre,
+                    comprobanteUrl: pedido.comprobante_url,
+                    usuario: {
+                        nombre: pedido.usuarios?.nombre || "Usuario desconocido",
+                        email: pedido.usuarios?.email || "N/A",
+                    },
                 }))
 
-                setPagos(pagosDePedidos)
+                setPagos(pagosProcesados)
             } catch (err) {
                 setError(err.message)
                 console.error("Error al cargar pagos:", err)
@@ -53,12 +72,21 @@ function AdminPagos({ onClose }) {
     const pagosFiltrados =
         filtro === "todos" ? pagos : pagos.filter((pago) => pago.estado.toLowerCase() === filtro.toLowerCase())
 
+    // Ver comprobante
+    const verComprobante = (url) => {
+        if (url) {
+            window.open(url, "_blank")
+        } else {
+            alert("No hay comprobante disponible para este pago")
+        }
+    }
+
     // Descargar comprobante
     const descargarComprobante = (pago) => {
         if (pago.comprobanteUrl) {
             const a = document.createElement("a")
             a.href = pago.comprobanteUrl
-            a.download = pago.comprobanteNombre || `comprobante-${pago.referencia}.jpg`
+            a.download = `comprobante-${pago.referencia || pago.id}.jpg`
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
@@ -70,20 +98,30 @@ function AdminPagos({ onClose }) {
     // Actualizar estado de pago
     const actualizarEstadoPago = async (id, nuevoEstado) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/pedidos/${id}/pago`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ estado: nuevoEstado }),
-            })
+            const { error } = await supabase
+                .from("pedidos")
+                .update({
+                    estado: nuevoEstado,
+                    fecha_actualizacion: new Date().toISOString(),
+                })
+                .eq("id", id)
 
-            if (!response.ok) {
-                throw new Error("No se pudo actualizar el estado del pago")
+            if (error) throw error
+
+            // Crear notificación para el usuario
+            const pago = pagos.find((p) => p.id === id)
+            if (pago) {
+                await supabase.from("notificaciones").insert({
+                    usuario_id: pago.usuario_id, // ID del usuario
+                    tipo: "estado_actualizado",
+                    mensaje: `El estado de tu pago ha sido actualizado a: ${nuevoEstado}`,
+                    leida: false,
+                    fecha: new Date().toISOString(),
+                })
             }
 
             // Actualizar estado local
-            setPagos(pagos.map((pago) => (pago.pedidoId === id ? { ...pago, estado: nuevoEstado } : pago)))
+            setPagos(pagos.map((pago) => (pago.id === id ? { ...pago, estado: nuevoEstado } : pago)))
 
             alert(`Pago actualizado a: ${nuevoEstado}`)
         } catch (err) {
@@ -91,32 +129,6 @@ function AdminPagos({ onClose }) {
             alert(err.message)
         }
     }
-
-    // Ver detalles del comprobante
-    const verComprobante = (pago) => {
-        if (pago.comprobanteUrl) {
-            window.open(pago.comprobanteUrl, "_blank")
-        } else {
-            alert("No hay comprobante disponible para este pago")
-        }
-    }
-
-    if (cargando)
-        return (
-            <div className="admin-modal-overlay">
-                <div className="admin-modal">
-                    <div className="admin-modal-header">
-                        <h2>Gestión de Pagos</h2>
-                        <button className="close-button" onClick={onClose}>
-                            <i className="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div className="cargando-container">
-                        <i className="fas fa-spinner fa-spin"></i> Cargando...
-                    </div>
-                </div>
-            </div>
-        )
 
     return (
         <div className="admin-modal-overlay">
@@ -137,13 +149,18 @@ function AdminPagos({ onClose }) {
                                 <option value="pendiente">Pendiente</option>
                                 <option value="procesando">Procesando</option>
                                 <option value="completado">Completado</option>
-                                <option value="fallido">Fallido</option>
+                                <option value="entregado">Entregado</option>
+                                <option value="cancelado">Cancelado</option>
                             </select>
                         </div>
 
                         {error && <div className="error-container">{error}</div>}
 
-                        {pagosFiltrados.length === 0 ? (
+                        {cargando ? (
+                            <div className="cargando-container">
+                                <i className="fas fa-spinner fa-spin"></i> Cargando...
+                            </div>
+                        ) : pagosFiltrados.length === 0 ? (
                             <div className="no-resultados">No hay pagos que coincidan con el filtro seleccionado</div>
                         ) : (
                             <div className="tabla-pagos">
@@ -162,13 +179,17 @@ function AdminPagos({ onClose }) {
                                     </thead>
                                     <tbody>
                                         {pagosFiltrados.map((pago) => (
-                                            <tr key={pago._id} className={`estado-${pago.estado.toLowerCase()}`}>
-                                                <td>{pago.usuario}</td>
+                                            <tr key={pago.id} className={`estado-${pago.estado.toLowerCase()}`}>
+                                                <td>{pago.usuario.nombre}</td>
                                                 <td>{pago.referencia}</td>
                                                 <td>{new Date(pago.fecha).toLocaleDateString()}</td>
                                                 <td>
                                                     <span className={`metodo-${pago.metodoPago}`}>
-                                                        {pago.metodoPago === "nequi" ? "Nequi" : pago.metodoPago}
+                                                        {pago.metodoPago === "nequi"
+                                                            ? "Nequi"
+                                                            : pago.metodoPago === "transferencia"
+                                                                ? "Transferencia"
+                                                                : pago.metodoPago}
                                                     </span>
                                                 </td>
                                                 <td>${pago.total.toLocaleString("es-ES")}</td>
@@ -187,7 +208,7 @@ function AdminPagos({ onClose }) {
                                                         </button>
                                                         <button
                                                             className="btn-ver-comprobante"
-                                                            onClick={() => verComprobante(pago)}
+                                                            onClick={() => verComprobante(pago.comprobanteUrl)}
                                                             disabled={!pago.comprobanteUrl}
                                                             title="Ver comprobante"
                                                         >
@@ -208,7 +229,8 @@ function AdminPagos({ onClose }) {
                                                             <option value="Pendiente">Pendiente</option>
                                                             <option value="Procesando">Procesando</option>
                                                             <option value="Completado">Completado</option>
-                                                            <option value="Fallido">Fallido</option>
+                                                            <option value="Entregado">Entregado</option>
+                                                            <option value="Cancelado">Cancelado</option>
                                                         </select>
                                                     </div>
                                                 </td>

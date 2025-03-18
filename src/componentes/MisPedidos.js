@@ -1,322 +1,382 @@
 "use client"
-
 import { useState, useEffect } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "../utils/supabase.ts"
 import "../hoja-de-estilos/MisPedidos.css"
 
-// Configura tu cliente de Supabase
-const supabaseUrl = "https://girvwbqhyfmatsvhzfty.supabase.co"
-const supabaseAnonKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpcnZ3YnFoeWZtYXRzdmh6ZnR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MTY1NDEsImV4cCI6MjA1NzM5MjU0MX0.Y6JTe8tRRZ-hHbFd5wKXr5wFXeKbLN_ceBourx27HnA"
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-function MisPedidos({ onClose, userId, isAdmin }) {
+function MisPedidosComponent({ onClose, userId }) {
     const [pedidos, setPedidos] = useState([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState("")
+    const [error, setError] = useState(null)
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
-    const [notificaciones, setNotificaciones] = useState([])
-    const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false)
-    const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0)
+    const [productosPedido, setProductosPedido] = useState([])
+    const [loadingProductos, setLoadingProductos] = useState(false)
 
+    // Cargar pedidos del usuario
     useEffect(() => {
-        const fetchPedidos = async () => {
+        const cargarPedidos = async () => {
             try {
-                let query = supabase.from("pedidos").select(`
-                *,
-                usuarios:user_id (
-                    nombre,
-                    email
-                )
-            `)
+                setLoading(true)
+                console.log("Cargando pedidos para usuario:", userId)
 
-                // Only filter by user_id if not admin
-                if (!isAdmin) {
-                    query = query.eq("user_id", userId)
-                }
-
-                const { data, error } = await query
+                const { data, error } = await supabase
+                    .from("pedidos")
+                    .select("*")
+                    .eq("usuario_id", userId)
+                    .order("created_at", { ascending: false })
 
                 if (error) {
-                    throw new Error("No se pudieron cargar los pedidos")
+                    console.error("Error al cargar pedidos:", error)
+                    throw error
                 }
 
-                // Ensure all pedidos have the required properties
-                const processedData = data.map((pedido) => ({
-                    ...pedido,
-                    productos: pedido.productos || [],
-                    estado: pedido.estado || "Pendiente",
-                    total: pedido.total || 0,
-                    fecha_pedido: pedido.fecha_pedido || pedido.fechaPedido,
-                }))
-
-                setPedidos(processedData)
+                console.log("Pedidos cargados:", data)
+                setPedidos(data || [])
+            } catch (err) {
+                console.error("Error al cargar pedidos:", err)
+                setError("No se pudieron cargar tus pedidos. Por favor, intenta de nuevo más tarde.")
+            } finally {
                 setLoading(false)
-            } catch (error) {
-                console.error("Error al cargar pedidos:", error)
-                setError("Error al cargar los pedidos. Por favor, intenta de nuevo.")
-                setLoading(false)
-            }
-        }
-
-        const fetchNotificaciones = async () => {
-            try {
-                const { data, error } = await supabase.from("notificaciones").select("*").eq("usuario_id", userId)
-
-                if (error) {
-                    throw new Error("No se pudieron cargar las notificaciones")
-                }
-
-                setNotificaciones(data)
-
-                // Contar notificaciones no leídas
-                const noLeidas = data.filter((notif) => !notif.leida).length
-                setNotificacionesNoLeidas(noLeidas)
-            } catch (error) {
-                console.error("Error al cargar notificaciones:", error)
             }
         }
 
         if (userId) {
-            fetchPedidos()
-            fetchNotificaciones()
+            cargarPedidos()
         }
-    }, [userId, isAdmin])
+    }, [userId])
 
-    // Formatear fecha
-    const formatDate = (dateString) => {
-        if (!dateString) return "Fecha no disponible"
-
+    // Cargar productos de un pedido específico
+    const cargarProductosPedido = async (pedidoId) => {
         try {
-            const date = new Date(dateString)
-            if (isNaN(date.getTime())) return "Fecha inválida"
+            setLoadingProductos(true)
+            console.log("Cargando productos para pedido:", pedidoId)
 
-            const options = {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
+            // Primero obtenemos los productos del pedido
+            const { data: productosData, error: productosError } = await supabase
+                .from("pedido_productos")
+                .select("*")
+                .eq("pedido_id", pedidoId)
+
+            if (productosError) {
+                console.error("Error al cargar productos del pedido:", productosError)
+                throw productosError
             }
-            return date.toLocaleDateString("es-ES", options)
-        } catch (error) {
-            console.error("Error formatting date:", error)
-            return "Fecha inválida"
+
+            console.log("Productos del pedido cargados:", productosData)
+
+            // Para cada producto del pedido, obtenemos la información completa del producto
+            const productosConDetalles = await Promise.all(
+                productosData.map(async (producto) => {
+                    try {
+                        // Obtener detalles del producto
+                        const { data: productoInfo, error: productoError } = await supabase
+                            .from("productos")
+                            .select("*")
+                            .eq("id", producto.producto_id)
+                            .single()
+
+                        if (productoError && productoError.code !== "PGRST116") {
+                            console.error(`Error al cargar detalles del producto ${producto.producto_id}:`, productoError)
+                        }
+
+                        // Obtener la primera imagen del producto
+                        let imagenUrl = "/placeholder.svg"
+                        if (productoInfo && productoInfo.imagenes) {
+                            try {
+                                const imagenes =
+                                    typeof productoInfo.imagenes === "string" ? JSON.parse(productoInfo.imagenes) : productoInfo.imagenes
+
+                                if (Array.isArray(imagenes) && imagenes.length > 0) {
+                                    imagenUrl = imagenes[0]
+                                }
+                            } catch (e) {
+                                console.error("Error al parsear imágenes:", e)
+                            }
+                        }
+
+                        // Si no hay imagen en el producto, intentar obtenerla de la tabla de imágenes
+                        if (imagenUrl === "/placeholder.svg" && productoInfo) {
+                            const { data: imagenesData, error: imagenesError } = await supabase
+                                .from("imagenes")
+                                .select("url")
+                                .eq("producto_id", productoInfo.id)
+                                .order("orden")
+                                .limit(1)
+
+                            if (!imagenesError && imagenesData && imagenesData.length > 0) {
+                                imagenUrl = imagenesData[0].url
+                            }
+                        }
+
+                        return {
+                            ...producto,
+                            nombre_producto: productoInfo?.nombre || "Producto no disponible",
+                            imagen_url: imagenUrl,
+                            subtotal: producto.precio_unitario * producto.cantidad,
+                        }
+                    } catch (err) {
+                        console.error("Error al procesar producto:", err)
+                        return {
+                            ...producto,
+                            nombre_producto: "Producto no disponible",
+                            imagen_url: "/placeholder.svg",
+                            subtotal: producto.precio_unitario * producto.cantidad,
+                        }
+                    }
+                }),
+            )
+
+            setProductosPedido(productosConDetalles)
+        } catch (err) {
+            console.error("Error al cargar productos del pedido:", err)
+            setProductosPedido([])
+        } finally {
+            setLoadingProductos(false)
         }
     }
 
+    // Mostrar detalles de un pedido
+    const verDetallesPedido = async (pedido) => {
+        setPedidoSeleccionado(pedido)
+        await cargarProductosPedido(pedido.id)
+    }
+
+    // Formatear fecha
+    const formatearFecha = (fechaStr) => {
+        if (!fechaStr) return "Fecha no disponible"
+        const fecha = new Date(fechaStr)
+        return fecha.toLocaleDateString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        })
+    }
+
     // Formatear precio
-    const formatPrice = (priceString) => {
-        if (!priceString) return "$0"
-
-        // Asegurarse de que priceString sea siempre una cadena
-        const formattedPrice = String(priceString)
-
-        return formattedPrice.startsWith("$") ? formattedPrice : `$${formattedPrice}`
+    const formatearPrecio = (precio) => {
+        if (precio === null || precio === undefined) return "$0"
+        return `$${Number(precio).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     }
 
     // Obtener clase CSS según el estado del pedido
     const getEstadoClass = (estado) => {
-        switch (estado) {
-            case "Pendiente":
+        switch (estado?.toLowerCase()) {
+            case "pendiente":
                 return "estado-pendiente"
-            case "Procesando":
-                return "estado-procesando"
-            case "Enviado":
+            case "confirmado":
+                return "estado-confirmado"
+            case "enviado":
                 return "estado-enviado"
-            case "Entregado":
+            case "entregado":
                 return "estado-entregado"
-            case "Cancelado":
+            case "cancelado":
                 return "estado-cancelado"
             default:
-                return ""
+                return "estado-pendiente"
         }
     }
 
-    // Ver detalles de un pedido
-    const verDetallesPedido = (pedido) => {
-        setPedidoSeleccionado(pedido)
-    }
-
-    // Cerrar detalles del pedido
+    // Cerrar modal de detalles
     const cerrarDetalles = () => {
         setPedidoSeleccionado(null)
-    }
-
-    // Obtener mensaje según el estado del pedido
-    const getMensajeEstado = (estado) => {
-        switch (estado) {
-            case "Pendiente":
-                return "Tu pedido está pendiente de procesamiento."
-            case "Procesando":
-                return "Tu pedido está siendo procesado."
-            case "Enviado":
-                return "¡Tu pedido ha sido enviado! Pronto llegará a tu dirección."
-            case "Entregado":
-                return "Tu pedido ha sido entregado. ¡Gracias por tu compra!"
-            case "Cancelado":
-                return "Lo sentimos, tu pedido ha sido cancelado."
-            default:
-                return ""
-        }
-    }
-
-    // Marcar notificación como leída
-    const marcarNotificacionComoLeida = async (notificacionId) => {
-        try {
-            const { error } = await supabase.from("notificaciones").update({ leida: true }).eq("id", notificacionId)
-
-            if (error) {
-                throw new Error("Error al actualizar la notificación")
-            }
-
-            // Actualizar el estado local de las notificaciones
-            setNotificaciones(
-                notificaciones.map((notif) => (notif.id === notificacionId ? { ...notif, leida: true } : notif)),
-            )
-
-            // Actualizar contador de no leídas
-            setNotificacionesNoLeidas((prev) => Math.max(0, prev - 1))
-        } catch (error) {
-            console.error("Error:", error)
-        }
-    }
-
-    // Alternar vista de notificaciones
-    const toggleNotificaciones = () => {
-        setMostrarNotificaciones(!mostrarNotificaciones)
+        setProductosPedido([])
     }
 
     return (
-        <div className="mis-pedidos-modal-overlay">
+        <div className="mis-pedidos-overlay">
             <div className="mis-pedidos-modal">
                 <div className="mis-pedidos-header">
-                    <h2>{isAdmin ? "Todos los Pedidos" : "Mis Pedidos"}</h2>
-                    <div className="header-actions">
-                        <button className="notificaciones-button" onClick={toggleNotificaciones}>
-                            <i className="fas fa-bell"></i>
-                            {notificacionesNoLeidas > 0 && <span className="notificaciones-badge">{notificacionesNoLeidas}</span>}
-                        </button>
-                        <button className="close-button" onClick={onClose}>
-                            <i className="fas fa-times"></i>
-                        </button>
-                    </div>
+                    <h2>
+                        {pedidoSeleccionado ? `Detalles del Pedido #${pedidoSeleccionado.id.substring(0, 8)}...` : "Mis Pedidos"}
+                    </h2>
+                    <button className="close-button" onClick={onClose}>
+                        <i className="fas fa-times"></i>
+                    </button>
                 </div>
 
                 <div className="mis-pedidos-content">
-                    {mostrarNotificaciones ? (
-                        <div className="notificaciones-panel">
-                            <div className="notificaciones-header">
-                                <h3>Notificaciones</h3>
-                                <button className="volver-button" onClick={toggleNotificaciones}>
-                                    <i className="fas fa-arrow-left"></i> Volver a mis pedidos
-                                </button>
-                            </div>
-
-                            {notificaciones.length > 0 ? (
-                                <div className="notificaciones-lista">
-                                    {notificaciones.map((notif) => (
-                                        <div
-                                            key={notif.id}
-                                            className={`notificacion-item ${!notif.leida ? "no-leida" : ""}`}
-                                            onClick={() => marcarNotificacionComoLeida(notif.id)}
-                                        >
-                                            <div className="notificacion-icono">
-                                                {notif.tipo === "pedido_eliminado" ? (
-                                                    <i className="fas fa-trash-alt"></i>
-                                                ) : (
-                                                    <i className="fas fa-info-circle"></i>
-                                                )}
-                                            </div>
-                                            <div className="notificacion-contenido">
-                                                <p className="notificacion-mensaje">{notif.mensaje}</p>
-                                                {notif.tipo === "pedido_eliminado" && notif.datos && (
-                                                    <div className="notificacion-detalles">
-                                                        <p>Pedido cancelado: ${notif.datos.total.toLocaleString("es-ES")}</p>
-                                                        <p>Fecha: {formatDate(notif.datos.fechaPedido)}</p>
-                                                        <p>
-                                                            Productos: {notif.datos.productos.map((p) => `${p.cantidad}x ${p.nombre}`).join(", ")}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                                <p className="notificacion-fecha">{formatDate(notif.fecha)}</p>
-                                            </div>
-                                            {!notif.leida && <div className="notificacion-indicador"></div>}
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="no-notificaciones">
-                                    <i className="fas fa-bell-slash"></i>
-                                    <p>No tienes notificaciones</p>
-                                </div>
-                            )}
+                    {loading ? (
+                        <div className="loading-spinner">
+                            <i className="fas fa-spinner fa-spin"></i>
+                            <p>Cargando tus pedidos...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="error-message">
+                            <i className="fas fa-exclamation-triangle"></i>
+                            <p>{error}</p>
                         </div>
                     ) : pedidoSeleccionado ? (
-                        <div className="pedido-detalles">
-                            <div className="detalles-header">
-                                <h3>Detalles del Pedido</h3>
+                        <div className="detalles-pedido">
+                            <div className="detalles-grid">
+                                <div className="detalles-seccion">
+                                    <h3>Información del Pedido</h3>
+                                    <p>
+                                        <strong>Fecha:</strong> {formatearFecha(pedidoSeleccionado.created_at)}
+                                    </p>
+                                    <p>
+                                        <strong>Estado:</strong>{" "}
+                                        <span className={`estado-badge ${getEstadoClass(pedidoSeleccionado.estado)}`}>
+                                            {pedidoSeleccionado.estado || "Pendiente"}
+                                        </span>
+                                    </p>
+                                    <p>
+                                        <strong>Total:</strong> {formatearPrecio(pedidoSeleccionado.total)}
+                                    </p>
+                                    <p>
+                                        <strong>Método de pago:</strong> {pedidoSeleccionado.metodo_pago || "No especificado"}
+                                    </p>
+                                    {pedidoSeleccionado.referencia_pago && (
+                                        <p>
+                                            <strong>Referencia:</strong> {pedidoSeleccionado.referencia_pago}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="detalles-seccion">
+                                    <h3>Dirección de envío</h3>
+                                    {pedidoSeleccionado.direccion_envio ? (
+                                        (() => {
+                                            try {
+                                                const direccion = JSON.parse(pedidoSeleccionado.direccion_envio)
+                                                return (
+                                                    <>
+                                                        <p>
+                                                            <strong>Nombre:</strong> {direccion.nombre} {direccion.apellido}
+                                                        </p>
+                                                        <p>
+                                                            <strong>Dirección:</strong> {direccion.direccion}
+                                                        </p>
+                                                        <p>
+                                                            <strong>Ciudad:</strong> {pedidoSeleccionado.ciudad_envio || direccion.ciudad}
+                                                            {direccion.departamento ? `, ${direccion.departamento}` : ""}
+                                                        </p>
+                                                        <p>
+                                                            <strong>Teléfono:</strong> {pedidoSeleccionado.telefono_contacto || direccion.telefono}
+                                                        </p>
+                                                    </>
+                                                )
+                                            } catch (e) {
+                                                return (
+                                                    <>
+                                                        <p>
+                                                            <strong>Dirección:</strong> {pedidoSeleccionado.direccion_envio}
+                                                        </p>
+                                                        {pedidoSeleccionado.ciudad_envio && (
+                                                            <p>
+                                                                <strong>Ciudad:</strong> {pedidoSeleccionado.ciudad_envio}
+                                                            </p>
+                                                        )}
+                                                        {pedidoSeleccionado.telefono_contacto && (
+                                                            <p>
+                                                                <strong>Teléfono:</strong> {pedidoSeleccionado.telefono_contacto}
+                                                            </p>
+                                                        )}
+                                                    </>
+                                                )
+                                            }
+                                        })()
+                                    ) : (
+                                        <>
+                                            {pedidoSeleccionado.ciudad_envio && (
+                                                <p>
+                                                    <strong>Ciudad:</strong> {pedidoSeleccionado.ciudad_envio}
+                                                </p>
+                                            )}
+                                            {pedidoSeleccionado.telefono_contacto && (
+                                                <p>
+                                                    <strong>Teléfono:</strong> {pedidoSeleccionado.telefono_contacto}
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="productos-seccion">
+                                <h3>Productos</h3>
+                                {loadingProductos ? (
+                                    <div className="loading-spinner">
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                        <p>Cargando productos...</p>
+                                    </div>
+                                ) : productosPedido.length > 0 ? (
+                                    <div className="productos-lista">
+                                        {productosPedido.map((producto) => (
+                                            <div key={producto.id} className="producto-item">
+                                                <div className="producto-imagen">
+                                                    <img
+                                                        src={producto.imagen_url || "/placeholder.svg"}
+                                                        alt={producto.nombre_producto || "Producto"}
+                                                    />
+                                                </div>
+                                                <div className="producto-info">
+                                                    <h4>{producto.nombre_producto || "Producto"}</h4>
+                                                    <p>
+                                                        <span className="producto-detalle">Color: {producto.color || "N/A"}</span>
+                                                        <span className="producto-detalle">Talla: {producto.talla || "N/A"}</span>
+                                                    </p>
+                                                    <p>
+                                                        <span className="producto-precio">{formatearPrecio(producto.precio_unitario)}</span> x{" "}
+                                                        <span className="producto-cantidad">{producto.cantidad}</span>
+                                                    </p>
+                                                    <p className="producto-subtotal">
+                                                        Subtotal:{" "}
+                                                        {formatearPrecio(producto.subtotal || producto.precio_unitario * producto.cantidad)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p>No hay detalles disponibles para este pedido.</p>
+                                )}
+                            </div>
+
+                            <div className="detalles-acciones">
                                 <button className="volver-button" onClick={cerrarDetalles}>
-                                    <i className="fas fa-arrow-left"></i> Volver a mis pedidos
+                                    Volver a mis pedidos
                                 </button>
                             </div>
-
-                            <div className="detalles-info">
-                                {isAdmin && pedidoSeleccionado.usuarios && (
-                                    <p>
-                                        <strong>Usuario:</strong> {pedidoSeleccionado.usuarios.nombre || pedidoSeleccionado.usuarios.email}
-                                    </p>
-                                )}
-                                <p>
-                                    <strong>Estado:</strong> {pedidoSeleccionado.estado || "No especificado"}
-                                </p>
-                                <p>
-                                    <strong>Total:</strong> {formatPrice(pedidoSeleccionado.total)}
-                                </p>
-                                <p>
-                                    <strong>Fecha:</strong>{" "}
-                                    {formatDate(pedidoSeleccionado.fecha_pedido || pedidoSeleccionado.fechaPedido)}
-                                </p>
-                                <p>
-                                    <strong>Productos:</strong>{" "}
-                                    {pedidoSeleccionado.productos && Array.isArray(pedidoSeleccionado.productos)
-                                        ? pedidoSeleccionado.productos.map((p) => `${p.cantidad}x ${p.nombre}`).join(", ")
-                                        : "No hay productos"}
-                                </p>
-                            </div>
-
-                            <div className="mensaje-estado">
-                                <p>{getMensajeEstado(pedidoSeleccionado.estado)}</p>
-                            </div>
+                        </div>
+                    ) : pedidos.length > 0 ? (
+                        <div className="pedidos-lista">
+                            <table className="pedidos-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pedido</th>
+                                        <th>Fecha</th>
+                                        <th>Estado</th>
+                                        <th>Total</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {pedidos.map((pedido) => (
+                                        <tr key={pedido.id}>
+                                            <td>#{pedido.id.substring(0, 8)}...</td>
+                                            <td>{formatearFecha(pedido.created_at)}</td>
+                                            <td>
+                                                <span className={`estado-badge ${getEstadoClass(pedido.estado)}`}>
+                                                    {pedido.estado || "Pendiente"}
+                                                </span>
+                                            </td>
+                                            <td>{formatearPrecio(pedido.total)}</td>
+                                            <td>
+                                                <button className="ver-detalles-button" onClick={() => verDetallesPedido(pedido)}>
+                                                    <i className="fas fa-eye"></i> Ver
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : (
-                        <div className="lista-pedidos">
-                            {loading ? (
-                                <div className="loading-spinner"></div>
-                            ) : error ? (
-                                <div className="error-message">{error}</div>
-                            ) : pedidos.length > 0 ? (
-                                <ul>
-                                    {pedidos.map((pedido) => (
-                                        <li key={pedido.id} className={`pedido-item ${getEstadoClass(pedido.estado)}`}>
-                                            <div onClick={() => verDetallesPedido(pedido)}>
-                                                <span className="pedido-total">{formatPrice(pedido.total)}</span>
-                                                <span className="pedido-fecha">{formatDate(pedido.fecha_pedido || pedido.fechaPedido)}</span>
-                                                <span className="pedido-estado">{pedido.estado || "Pendiente"}</span>
-                                                {isAdmin && pedido.usuarios && (
-                                                    <span className="pedido-usuario">
-                                                        Usuario: {pedido.usuarios.nombre || pedido.usuarios.email || "Usuario desconocido"}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <div className="no-pedidos">
-                                    <p>No has realizado ningún pedido.</p>
-                                </div>
-                            )}
+                        <div className="no-pedidos">
+                            <i className="fas fa-shopping-bag"></i>
+                            <p>No tienes pedidos realizados</p>
+                            <p>¡Explora nuestro catálogo y realiza tu primer pedido!</p>
                         </div>
                     )}
                 </div>
@@ -325,5 +385,5 @@ function MisPedidos({ onClose, userId, isAdmin }) {
     )
 }
 
-export default MisPedidos
+export default MisPedidosComponent
 

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import "../hoja-de-estilos/PedidosPanel.css"
 import { supabase } from "../utils/supabase.ts"
+import "../hoja-de-estilos/PedidosPanel.css"
 
 function PedidosPanel({ onClose }) {
     const [pedidos, setPedidos] = useState([])
@@ -51,7 +51,7 @@ function PedidosPanel({ onClose }) {
                     .from("pedidos")
                     .select(`
                         *,
-                        usuario:user_id (
+                        usuarios:usuario_id (
                             id,
                             nombre,
                             email,
@@ -67,39 +67,72 @@ function PedidosPanel({ onClose }) {
                 // Obtener productos para cada pedido
                 const pedidosConProductos = await Promise.all(
                     pedidosData.map(async (pedido) => {
-                        const { data: productos, error: productosError } = await supabase
+                        // Intentar obtener productos de pedido_productos primero (tabla principal)
+                        const { data: productosRelacion, error: productosError } = await supabase
                             .from("pedido_productos")
                             .select(`
-                                cantidad,
-                                color,
-                                talla,
-                                precio,
-                                producto:producto_id (
-                                    nombre
-                                )
-                            `)
+                        cantidad,
+                        color,
+                        talla,
+                        precio_unitario,
+                        productos:producto_id (
+                            id,
+                            nombre,
+                            descripcion,
+                            precio
+                        )
+                    `)
                             .eq("pedido_id", pedido.id)
 
-                        if (productosError) {
-                            console.error("Error al obtener productos del pedido:", productosError)
+                        console.log(`Productos encontrados para pedido ${pedido.id}:`, productosRelacion)
+
+                        if (!productosError && productosRelacion && productosRelacion.length > 0) {
+                            // Si hay productos en pedido_productos, usarlos
+                            const productosFormateados = productosRelacion.map((item) => ({
+                                nombre: item.productos?.nombre || "Producto no disponible",
+                                precio: item.precio_unitario || 0,
+                                cantidad: item.cantidad || 1,
+                                color: item.color || "N/A",
+                                talla: item.talla || "N/A",
+                                subtotal: (item.precio_unitario || 0) * (item.cantidad || 1),
+                            }))
+
                             return {
                                 ...pedido,
-                                productos: [],
+                                usuario: pedido.usuarios,
+                                productos: productosFormateados,
                             }
                         }
 
-                        // Formatear productos
-                        const productosFormateados = productos.map((item) => ({
-                            nombre: item.producto?.nombre || "Producto no disponible",
-                            precio: item.precio || 0,
-                            cantidad: item.cantidad || 1,
-                            color: item.color || "N/A",
-                            talla: item.talla || "N/A",
-                        }))
+                        // Si no hay productos en pedido_productos, intentar con detalles_pedido
+                        const { data: detalles, error: detallesError } = await supabase
+                            .from("detalles_pedido")
+                            .select("*")
+                            .eq("pedido_id", pedido.id)
 
+                        if (!detallesError && detalles && detalles.length > 0) {
+                            // Si hay detalles, usarlos
+                            const productosFormateados = detalles.map((item) => ({
+                                nombre: item.producto_nombre || "Producto no disponible",
+                                precio: item.precio || 0,
+                                cantidad: item.cantidad || 1,
+                                color: item.color || "N/A",
+                                talla: item.talla || "N/A",
+                                subtotal: item.subtotal || 0,
+                            }))
+
+                            return {
+                                ...pedido,
+                                usuario: pedido.usuarios,
+                                productos: productosFormateados,
+                            }
+                        }
+
+                        // Si no hay productos en ninguna tabla, devolver un array vacío
                         return {
                             ...pedido,
-                            productos: productosFormateados,
+                            usuario: pedido.usuarios,
+                            productos: [],
                         }
                     }),
                 )
@@ -130,27 +163,85 @@ function PedidosPanel({ onClose }) {
         return new Date(dateString).toLocaleDateString("es-ES", options)
     }
 
-    // Formatear precio
-    const formatPrice = (priceString) => {
-        if (!priceString) return "$0"
-        return priceString.startsWith("$") ? priceString : `$${priceString}`
-    }
-
     // Obtener clase CSS según el estado del pedido
     const getEstadoClass = (estado) => {
         switch (estado) {
+            case "pendiente":
             case "Pendiente":
                 return "estado-pendiente"
+            case "procesando":
             case "Procesando":
                 return "estado-procesando"
+            case "enviado":
             case "Enviado":
                 return "estado-enviado"
+            case "entregado":
             case "Entregado":
                 return "estado-entregado"
+            case "cancelado":
             case "Cancelado":
                 return "estado-cancelado"
             default:
                 return ""
+        }
+    }
+
+    // Formatear dirección de envío
+    const formatearDireccion = (direccionStr) => {
+        if (!direccionStr) return "Dirección no disponible"
+
+        try {
+            // Intentar parsear si es un JSON
+            if (typeof direccionStr === "string" && direccionStr.startsWith("{")) {
+                const direccion = JSON.parse(direccionStr)
+
+                // Formatear la dirección de manera legible
+                if (direccion.nombre && direccion.apellido) {
+                    return (
+                        <div className="direccion-formateada">
+                            <p>
+                                <strong>Nombre:</strong> {direccion.nombre} {direccion.apellido}
+                            </p>
+                            <p>
+                                <strong>Dirección:</strong> {direccion.direccion}
+                            </p>
+                            <p>
+                                <strong>Ciudad:</strong> {direccion.ciudad || ""}
+                            </p>
+                            {direccion.codigoPostal && (
+                                <p>
+                                    <strong>Código Postal:</strong> {direccion.codigoPostal}
+                                </p>
+                            )}
+                            <p>
+                                <strong>Teléfono:</strong> {direccion.telefono}
+                            </p>
+                            {direccion.instrucciones && (
+                                <p>
+                                    <strong>Instrucciones:</strong> {direccion.instrucciones}
+                                </p>
+                            )}
+                        </div>
+                    )
+                } else {
+                    // Si no tiene nombre/apellido, mostrar campos disponibles
+                    return (
+                        <div className="direccion-formateada">
+                            {Object.entries(direccion).map(([key, value]) => (
+                                <p key={key}>
+                                    <strong>{key}:</strong> {value}
+                                </p>
+                            ))}
+                        </div>
+                    )
+                }
+            } else {
+                // Si no es JSON, mostrar como texto
+                return <p>{direccionStr}</p>
+            }
+        } catch (error) {
+            console.error("Error al formatear dirección:", error)
+            return <p>{direccionStr}</p>
         }
     }
 
@@ -178,10 +269,22 @@ function PedidosPanel({ onClose }) {
             // Actualizar en Supabase
             const { error } = await supabase
                 .from("pedidos")
-                .update({ estado: estadoSeleccionado })
+                .update({
+                    estado: estadoSeleccionado,
+                    fecha_actualizacion: new Date().toISOString(),
+                })
                 .eq("id", pedidoSeleccionado.id)
 
             if (error) throw error
+
+            // Crear notificación para el usuario
+            await supabase.from("notificaciones").insert({
+                usuario_id: pedidoSeleccionado.usuario.id,
+                tipo: "estado_actualizado",
+                mensaje: `El estado de tu pedido ha sido actualizado a: ${estadoSeleccionado}`,
+                leida: false,
+                fecha: new Date().toISOString(),
+            })
 
             // Actualizar el pedido en la lista
             setPedidos(pedidos.map((p) => (p.id === pedidoSeleccionado.id ? { ...p, estado: estadoSeleccionado } : p)))
@@ -209,10 +312,32 @@ function PedidosPanel({ onClose }) {
         }
 
         try {
+            // Primero eliminar los productos asociados al pedido
+            const { error: errorProductos } = await supabase
+                .from("pedido_productos")
+                .delete()
+                .eq("pedido_id", pedidoSeleccionado.id)
+
+            if (errorProductos) throw errorProductos
+
             // Eliminar en Supabase
             const { error } = await supabase.from("pedidos").delete().eq("id", pedidoSeleccionado.id)
 
             if (error) throw error
+
+            // Crear notificación para el usuario
+            await supabase.from("notificaciones").insert({
+                usuario_id: pedidoSeleccionado.usuario.id,
+                tipo: "pedido_eliminado",
+                mensaje: "Tu pedido ha sido cancelado por el administrador",
+                leida: false,
+                fecha: new Date().toISOString(),
+                datos: {
+                    total: pedidoSeleccionado.total,
+                    fechaPedido: pedidoSeleccionado.fecha_pedido,
+                    productos: pedidoSeleccionado.productos,
+                },
+            })
 
             // Eliminar el pedido de la lista
             setPedidos(pedidos.filter((p) => p.id !== pedidoSeleccionado.id))
@@ -246,11 +371,6 @@ function PedidosPanel({ onClose }) {
 
         return true
     })
-
-    // Verificar si un pedido tiene comprobante de pago pendiente
-    const tienePagoPendiente = (pedido) => {
-        return pedido.pago && pedido.pago.estado === "Pendiente"
-    }
 
     if (!isAdmin) {
         return (
@@ -296,93 +416,71 @@ function PedidosPanel({ onClose }) {
                         </div>
                     ) : (
                         <>
-                            <div className="filtros-busqueda">
-                                <div className="filtro-estado">
-                                    <label htmlFor="filtroEstado">Filtrar por estado:</label>
-                                    <select id="filtroEstado" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-                                        <option value="Todos">Todos</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="Procesando">Procesando</option>
-                                        <option value="Enviado">Enviado</option>
-                                        <option value="Entregado">Entregado</option>
-                                        <option value="Cancelado">Cancelado</option>
-                                    </select>
-                                </div>
+                            {!pedidoSeleccionado ? (
+                                <>
+                                    <div className="filtros-busqueda">
+                                        <div className="filtro-estado">
+                                            <label htmlFor="filtroEstado">Filtrar por estado:</label>
+                                            <select id="filtroEstado" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+                                                <option value="Todos">Todos</option>
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="procesando">Procesando</option>
+                                                <option value="enviado">Enviado</option>
+                                                <option value="entregado">Entregado</option>
+                                                <option value="cancelado">Cancelado</option>
+                                            </select>
+                                        </div>
 
-                                <div className="busqueda">
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre, email o ID..."
-                                        value={busqueda}
-                                        onChange={(e) => setBusqueda(e.target.value)}
-                                    />
-                                    {busqueda && (
-                                        <button className="limpiar-busqueda" onClick={() => setBusqueda("")}>
-                                            <i className="fas fa-times"></i>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                                        <div className="busqueda">
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar por nombre, email o ID..."
+                                                value={busqueda}
+                                                onChange={(e) => setBusqueda(e.target.value)}
+                                            />
+                                            {busqueda && (
+                                                <button className="limpiar-busqueda" onClick={() => setBusqueda("")}>
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
 
-                            {loading ? (
-                                <div className="loading-spinner">
-                                    <i className="fas fa-spinner fa-spin"></i>
-                                    <p>Cargando pedidos...</p>
-                                </div>
-                            ) : error ? (
-                                <div className="error-message">{error}</div>
-                            ) : (
-                                <div className="pedidos-table-container">
                                     {pedidosFiltrados.length > 0 ? (
-                                        <table className="pedidos-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Cliente</th>
-                                                    <th>Fecha</th>
-                                                    <th>Total</th>
-                                                    <th>Estado</th>
-                                                    <th>Pago</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {pedidosFiltrados.map((pedido) => (
-                                                    <tr key={pedido.id} className={tienePagoPendiente(pedido) ? "fila-pago-pendiente" : ""}>
-                                                        <td>{pedido.id.toString().substring(0, 8)}...</td>
-                                                        <td>{pedido.usuario ? pedido.usuario.nombre : "N/A"}</td>
-                                                        <td>{formatDate(pedido.created_at || pedido.fechaPedido)}</td>
-                                                        <td>${pedido.total ? pedido.total.toLocaleString("es-ES") : "0"}</td>
-                                                        <td>
-                                                            <span className={`estado-badge ${getEstadoClass(pedido.estado)}`}>
-                                                                {pedido.estado || "Pendiente"}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            {pedido.pago ? (
-                                                                <span
-                                                                    className={`estado-badge ${pedido.pago.estado === "Completado"
-                                                                        ? "estado-entregado"
-                                                                        : pedido.pago.estado === "Pendiente"
-                                                                            ? "estado-pendiente"
-                                                                            : "estado-procesando"
-                                                                        }`}
-                                                                >
-                                                                    {pedido.pago.estado}
-                                                                </span>
-                                                            ) : (
-                                                                "N/A"
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            <button className="ver-detalles-button" onClick={() => verDetallesPedido(pedido)}>
-                                                                <i className="fas fa-eye"></i> Ver detalles
-                                                            </button>
-                                                        </td>
+                                        <div className="pedidos-table-container">
+                                            <table className="pedidos-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Cliente</th>
+                                                        <th>Fecha</th>
+                                                        <th>Total</th>
+                                                        <th>Estado</th>
+                                                        <th>Acciones</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    {pedidosFiltrados.map((pedido) => (
+                                                        <tr key={pedido.id}>
+                                                            <td>{pedido.id.toString().substring(0, 8)}...</td>
+                                                            <td>{pedido.usuario ? pedido.usuario.nombre : "N/A"}</td>
+                                                            <td>{formatDate(pedido.created_at || pedido.fecha_pedido)}</td>
+                                                            <td>${pedido.total ? pedido.total.toLocaleString("es-ES") : "0"}</td>
+                                                            <td>
+                                                                <span className={`estado-badge ${getEstadoClass(pedido.estado)}`}>
+                                                                    {pedido.estado || "Pendiente"}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <button className="ver-detalles-button" onClick={() => verDetallesPedido(pedido)}>
+                                                                    <i className="fas fa-eye"></i> Ver detalles
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     ) : (
                                         <div className="no-pedidos">
                                             <i className="fas fa-shopping-bag"></i>
@@ -398,6 +496,148 @@ function PedidosPanel({ onClose }) {
                                                     <i className="fas fa-filter"></i> Limpiar filtros
                                                 </button>
                                             )}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="pedido-detalles">
+                                    <div className="detalles-header">
+                                        <button className="volver-button" onClick={cerrarDetalles}>
+                                            <i className="fas fa-arrow-left"></i> Volver a la lista
+                                        </button>
+                                        <div className="detalles-acciones">
+                                            <button className="eliminar-button" onClick={eliminarPedido}>
+                                                <i className="fas fa-trash"></i> Eliminar pedido
+                                            </button>
+                                            <button className="cerrar-button" onClick={onClose}>
+                                                <i className="fas fa-times"></i> Cerrar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="detalles-grid">
+                                        <div className="detalles-seccion">
+                                            <h3>Información del pedido</h3>
+                                            <div className="detalles-info">
+                                                <p>
+                                                    <strong>ID:</strong> {pedidoSeleccionado.id}
+                                                </p>
+                                                <p>
+                                                    <strong>Cliente:</strong> {pedidoSeleccionado.usuario?.nombre}{" "}
+                                                    {pedidoSeleccionado.usuario?.apellido}
+                                                </p>
+                                                <p>
+                                                    <strong>Email:</strong> {pedidoSeleccionado.usuario?.email}
+                                                </p>
+                                                <p>
+                                                    <strong>Fecha:</strong>{" "}
+                                                    {formatDate(pedidoSeleccionado.fecha_pedido || pedidoSeleccionado.created_at)}
+                                                </p>
+                                                <p>
+                                                    <strong>Total:</strong> ${pedidoSeleccionado.total.toLocaleString("es-ES")}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="detalles-seccion">
+                                            <h3>Dirección de envío</h3>
+                                            <div className="detalles-info">
+                                                {formatearDireccion(pedidoSeleccionado.direccion_envio)}
+                                                <p>
+                                                    <strong>Ciudad:</strong> {pedidoSeleccionado.ciudad_envio}
+                                                </p>
+                                                {pedidoSeleccionado.codigo_postal_envio && (
+                                                    <p>
+                                                        <strong>Código postal:</strong> {pedidoSeleccionado.codigo_postal_envio}
+                                                    </p>
+                                                )}
+                                                <p>
+                                                    <strong>Teléfono:</strong> {pedidoSeleccionado.telefono_contacto}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="detalles-seccion productos-seccion">
+                                        <h3>Productos</h3>
+                                        <table className="productos-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Precio</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Color</th>
+                                                    <th>Talla</th>
+                                                    <th>Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {pedidoSeleccionado.productos && pedidoSeleccionado.productos.length > 0 ? (
+                                                    pedidoSeleccionado.productos.map((producto, index) => (
+                                                        <tr key={index}>
+                                                            <td>{producto.nombre}</td>
+                                                            <td>
+                                                                $
+                                                                {typeof producto.precio === "number"
+                                                                    ? producto.precio.toLocaleString("es-ES")
+                                                                    : producto.precio}
+                                                            </td>
+                                                            <td>{producto.cantidad}</td>
+                                                            <td>{producto.color}</td>
+                                                            <td>{producto.talla}</td>
+                                                            <td>
+                                                                $
+                                                                {typeof producto.subtotal === "number"
+                                                                    ? producto.subtotal.toLocaleString("es-ES")
+                                                                    : (producto.precio * producto.cantidad).toLocaleString("es-ES")}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="6" style={{ textAlign: "center" }}>
+                                                            No hay productos disponibles
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div className="detalles-seccion actualizar-estado">
+                                        <h3>Actualizar estado</h3>
+                                        <div className="actualizar-estado-form">
+                                            <select
+                                                value={estadoSeleccionado}
+                                                onChange={(e) => setEstadoSeleccionado(e.target.value)}
+                                                className="estado-select"
+                                            >
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="procesando">Procesando</option>
+                                                <option value="enviado">Enviado</option>
+                                                <option value="entregado">Entregado</option>
+                                                <option value="cancelado">Cancelado</option>
+                                            </select>
+                                            <button
+                                                className="actualizar-button"
+                                                onClick={actualizarEstadoPedido}
+                                                disabled={actualizandoEstado || estadoSeleccionado === pedidoSeleccionado.estado}
+                                            >
+                                                {actualizandoEstado ? (
+                                                    <>
+                                                        <i className="fas fa-spinner fa-spin"></i> Actualizando...
+                                                    </>
+                                                ) : (
+                                                    "Actualizar estado"
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {pedidoSeleccionado.notas && (
+                                        <div className="detalles-seccion">
+                                            <h3>Notas</h3>
+                                            <p className="notas-text">{pedidoSeleccionado.notas}</p>
                                         </div>
                                     )}
                                 </div>

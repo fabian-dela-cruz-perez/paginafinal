@@ -2,8 +2,7 @@
 import "./App.css"
 import AdminPagos from "../src/componentes/AdminPagos"
 import AdminProductos from "./componentes/AdminProductos"
-import Navbar from "./componentes/NavBar.js" // Import the new Navbar component
-
+import Navbar from "./componentes/NavBar.js"
 
 import "./hoja-de-estilos/Logo.css"
 import "./hoja-de-estilos/Barra-de-busqueda.css"
@@ -14,31 +13,6 @@ import PedidosPanel from "./componentes/PedidosPanel"
 import MisPedidosComponent from "./componentes/MisPedidos"
 import { useState, useEffect } from "react"
 import { supabase } from "./utils/supabase.ts"
-import conjuntocalamar from "./imagenes/conjuntocalamar/conjuntocalamar1.jpg"
-import conjuntocapucha from "../src/imagenes/conjuntocapucha/conjuntocapucha1.jpg"
-import gorra from "./imagenes/gorra/gorra1.jpg"
-import conjuntodeportivo from "./imagenes/conjuntodeportivo/conjuntodeportivo1.jpg"
-import conjuntonegro from "./imagenes/conjuntonegro/conjuntonegro1.jpg"
-import zapatosfoam from "../src/imagenes/zapatosfoam/zapatosfoam1.jpg"
-import monedero from "./imagenes/monedero/monedero1.jpg"
-import zapatoscorrer from "../src/imagenes/Zapatos deportivos para correr.jpg"
-import zapatoscasuales from "../src/imagenes/Zapatos Casuales Retro.jpg"
-
-// Importar imágenes adicionales para cada producto (ejemplo)
-import conjuntocalamar2 from "../src/imagenes/conjuntocalamar/conjuntocalamar2.jpg" // Asegúrate de tener estas imágenes
-import conjuntocalamar3 from "../src/imagenes/conjuntocalamar/conjuntocalamar3.jpg" // o reemplaza con rutas correctas
-import conjuntocapucha2 from "../src/imagenes/conjuntocapucha/conjuntocapucha2.jpg"
-import conjuntocapucha3 from "../src/imagenes/conjuntocapucha/conjuntocapucha3.jpg"
-import zapatosfoam2 from "../src/imagenes/zapatosfoam/zapatosfoam2.jpg"
-import zapatosfoam3 from "../src/imagenes/zapatosfoam/zapatosfoam3.jpg"
-import gorra2 from "./imagenes/gorra/gorra2.jpg"
-import gorra3 from "./imagenes/gorra/gorra3.jpg"
-import conjuntodeportivo2 from "./imagenes/conjuntodeportivo/conjuntodeportivo2.jpg"
-import conjuntodeportivo3 from "./imagenes/conjuntodeportivo/conjuntodeportivo3.jpg"
-import conjuntonegro2 from "./imagenes/conjuntonegro/conjuntonegro2.jpg"
-import conjuntonegro3 from "./imagenes/conjuntonegro/conjuntonegro3.jpg"
-import monedero2 from "./imagenes/monedero/monedero1.jpg"
-import monedero3 from "./imagenes/monedero/monedero3.jpg"
 
 // Importar los nuevos componentes en la parte superior del archivo
 import InformacionEnvio from "./componentes/InformacionEnvio"
@@ -68,8 +42,11 @@ function App() {
   const [mostrarInfoEnvio, setMostrarInfoEnvio] = useState(false)
   const [mostrarPasarelaPago, setMostrarPasarelaPago] = useState(false)
   const [direccionEnvio, setDireccionEnvio] = useState("")
-  // const [datosEnvio, setDatosEnvio] = useState(null); // Se utilizará en futuras implementaciones
   const [infoPago, setInfoPago] = useState(null)
+
+  // Nuevo estado para almacenar los productos cargados desde la base de datos
+  const [todosLosProductos, setTodosLosProductos] = useState([])
+  const [loadingProductos, setLoadingProductos] = useState(true)
 
   // Verificar sesión de usuario y permisos de administrador
   useEffect(() => {
@@ -146,112 +123,77 @@ function App() {
     }
   }, [])
 
-  // Definir todos los productos en un solo array
-  const todosLosProductos = [
-    {
-      imagen: conjuntocalamar,
-      imagenes: [
-        conjuntocalamar,
-        conjuntocalamar2, // Imagen adicional 1
-        conjuntocalamar3, // Imagen adicional 2
-      ],
-      nombre: "Conjunto del juego del calamar",
-      descripcion: "Conjunto deportivo inspirado en Squid Game, cómodo y ligero, ideal para entrenar o descansar.",
-      precio: "$50.000",
-      categoria: "Conjuntos",
-      colorUnico: "Unico", // Añadido colorUnico
-    },
-    {
-      imagen: conjuntocapucha,
-      imagenes: [
-        conjuntocapucha,
-        conjuntocapucha2, // Imagen adicional 1
-        conjuntocapucha3, // Imagen adicional 2
-      ],
-      nombre: "Conjunto capucha de manga larga con estampado de estrellas y letras de Super Wisdom",
-      descripcion: "Conjunto de sudadera y pantalón 'Super Wisdom', diseño moderno y cómodo para el día a día.",
-      precio: "$45.000",
-      categoria: "Conjuntos",
-      colorUnico: "Unico", // Añadido colorUnico
-    },
-    {
-      imagen: gorra,
-      imagenes: [gorra, gorra2, gorra3],
-      nombre: "Gorra",
-      descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
-      precio: "$60.000",
-      categoria: "Gorras",
-    },
-    {
-      imagen: conjuntodeportivo,
-      imagenes: [conjuntodeportivo, conjuntodeportivo2, conjuntodeportivo3],
-      nombre: "Conjunto deportivo",
-      descripcion:
-        "Conjunto deportivo compuesto por camiseta de licra roja y shorts negros con diseño gráfico. Material de secado rápido, ideal para actividades acuáticas o al aire libre.",
-      precio: "$80.000",
-      categoria: "Conjuntos",
-    },
-    {
-      imagen: conjuntonegro,
-      imagenes: [conjuntonegro, conjuntonegro2, conjuntonegro3],
-      nombre: "Conjunto deportivo negro",
-      descripcion:
-        "Conjunto deportivo negro de dos piezas, compuesto por sudadera y pantalones ajustados. Ideal para uso casual o deportivo.",
-      precio: "$90.000",
-      categoria: "Conjuntos",
-      colorUnico: "Negro", // Añadido colorUnico
-    },
-    {
-      imagen: zapatosfoam,
-      imagenes: [
-        zapatosfoam,
-        zapatosfoam2, // Imagen adicional 1
-        zapatosfoam3, // Imagen adicional 2
-      ],
-      nombre: "Zapatos foam",
-      descripcion: "Estilo audaz con diseño de llamas en colores vivos. Ideal para destacar en cualquier ocasión.",
-      precio: "$150.000",
-      categoria: "Zapatos",
-    },
-    {
-      imagen: monedero,
-      imagenes: [monedero, monedero2, monedero3],
-      nombre: "Monedero de naruto",
-      descripcion: "Monedero temático de Naruto, perfecto para fans del anime. Diseño práctico y duradero.",
-      precio: "$80.000",
-      categoria: "Accesorios",
-    },
-    {
-      imagen: zapatoscorrer,
-      nombre: "Zapatos deportivos",
-      descripcion:
-        "Estas zapatillas parecen estar diseñadas para ofrecer comodidad y un estilo audaz, ideales tanto para entrenar como para uso casual.",
-      precio: "$180.000",
-      categoria: "Zapatos",
-    },
-    {
-      imagen: zapatoscasuales,
-      nombre: "Zapatos casuales retro",
-      descripcion:
-        "Zapatillas deportivas blancas con detalles en azul y patrón estilo bandana, suela gruesa y toques rojos en el cierre.",
-      precio: "$180.000",
-      categoria: "Zapatos",
-    },
-    {
-      imagen: "",
-      nombre: "",
-      descripcion: "",
-      precio: "",
-      categoria: "",
-    },
-    {
-      imagen: "",
-      nombre: "",
-      descripcion: "",
-      precio: "",
-      categoria: "",
-    },
-  ]
+  // Nuevo useEffect para cargar productos desde Supabase
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        setLoadingProductos(true)
+
+        // Obtener productos de la base de datos
+        const { data: productosData, error } = await supabase
+          .from("productos")
+          .select(`
+            *,
+            categorias:categoria_id (
+              id,
+              nombre
+            )
+          `)
+          .order("nombre")
+
+        if (error) {
+          console.error("Error al cargar productos:", error)
+          return
+        }
+
+        // Obtener imágenes para cada producto
+        const productosConImagenes = await Promise.all(
+          productosData.map(async (producto) => {
+            // Obtener imágenes del producto
+            const { data: imagenesData, error: imagenesError } = await supabase
+              .from("imagenes")
+              .select("*")
+              .eq("producto_id", producto.id)
+              .order("orden")
+
+            if (imagenesError) {
+              console.error(`Error al cargar imágenes para producto ${producto.id}:`, imagenesError)
+              return {
+                ...producto,
+                imagen: "/placeholder.svg",
+                imagenes: ["/placeholder.svg"],
+              }
+            }
+
+            // Formatear el producto con sus imágenes
+            const imagenes =
+              imagenesData && imagenesData.length > 0 ? imagenesData.map((img) => img.url) : ["/placeholder.svg"]
+
+            return {
+              id: producto.id,
+              nombre: producto.nombre,
+              descripcion: producto.descripcion,
+              precio: `$${producto.precio.toLocaleString("es-ES")}`, // Asegurarse que sea string
+              categoria: producto.categorias ? producto.categorias.nombre : "Sin categoría",
+              colorUnico: producto.color_unico || null,
+              imagen: imagenes[0],
+              imagenes: imagenes,
+              tallas_disponibles: producto.tallas_disponibles || [],
+              colores_disponibles: producto.colores_disponibles || [],
+            }
+          }),
+        )
+
+        setTodosLosProductos(productosConImagenes)
+      } catch (error) {
+        console.error("Error al cargar productos:", error)
+      } finally {
+        setLoadingProductos(false)
+      }
+    }
+
+    cargarProductos()
+  }, [])
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen)
@@ -262,28 +204,34 @@ function App() {
   }
 
   const agregarAlCarrito = (producto, cantidad, color, talla) => {
-    // Crear un identificador único para el producto con su color y talla
-    const productoId = `${producto.nombre}-${color}-${talla}`
+    // Usar el ID real del producto como base para el ID del item en el carrito
+    const productoId = `${producto.id}-${color}-${talla}`
 
-    const productoExistente = carrito.find(
-      (item) => item.nombre === producto.nombre && item.color === color && item.talla === talla,
-    )
+    const productoExistente = carrito.find((item) => item.id === productoId)
 
     if (productoExistente) {
       setCarrito(
         carrito.map((item) =>
-          item.nombre === producto.nombre && item.color === color && item.talla === talla
-            ? { ...productoExistente, cantidad: productoExistente.cantidad + cantidad }
-            : item,
+          item.id === productoId ? { ...productoExistente, cantidad: productoExistente.cantidad + cantidad } : item,
         ),
       )
     } else {
       setCarrito([...carrito, { ...producto, cantidad, color, talla, id: productoId }])
     }
+
+    // Guardar carrito en localStorage para recuperación
+    localStorage.setItem(
+      "carrito",
+      JSON.stringify([...carrito, { ...producto, cantidad, color, talla, id: productoId }]),
+    )
   }
 
   const eliminarDelCarrito = (productoId) => {
-    setCarrito(carrito.filter((item) => item.id !== productoId))
+    const nuevoCarrito = carrito.filter((item) => item.id !== productoId)
+    setCarrito(nuevoCarrito)
+
+    // Actualizar localStorage
+    localStorage.setItem("carrito", JSON.stringify(nuevoCarrito))
   }
 
   const toggleCarrito = () => {
@@ -341,9 +289,64 @@ function App() {
   }
 
   // Función para manejar productos agregados desde el panel de administración
-  const handleProductoAgregado = (nuevoProducto) => {
-    // Aquí puedes actualizar el estado de productos si es necesario
-    console.log("Producto agregado:", nuevoProducto)
+  const handleProductoAgregado = async (nuevoProducto) => {
+    // Recargar los productos después de agregar uno nuevo
+    try {
+      const { data, error } = await supabase
+        .from("productos")
+        .select(`
+          *,
+          categorias:categoria_id (
+            id,
+            nombre
+          )
+        `)
+        .order("nombre")
+
+      if (error) throw error
+
+      // Actualizar el estado con los productos actualizados
+      const productosConImagenes = await Promise.all(
+        data.map(async (producto) => {
+          // Obtener imágenes del producto
+          const { data: imagenesData, error: imagenesError } = await supabase
+            .from("imagenes")
+            .select("*")
+            .eq("producto_id", producto.id)
+            .order("orden")
+
+          if (imagenesError) {
+            console.error(`Error al cargar imágenes para producto ${producto.id}:`, imagenesError)
+            return {
+              ...producto,
+              imagen: "/placeholder.svg",
+              imagenes: ["/placeholder.svg"],
+            }
+          }
+
+          // Formatear el producto con sus imágenes
+          const imagenes =
+            imagenesData && imagenesData.length > 0 ? imagenesData.map((img) => img.url) : ["/placeholder.svg"]
+
+          return {
+            id: producto.id,
+            nombre: producto.nombre,
+            descripcion: producto.descripcion,
+            precio: `$${producto.precio.toLocaleString("es-ES")}`,
+            categoria: producto.categorias ? producto.categorias.nombre : "Sin categoría",
+            colorUnico: producto.color_unico || null,
+            imagen: imagenes[0],
+            imagenes: imagenes,
+            tallas_disponibles: producto.tallas_disponibles || [],
+            colores_disponibles: producto.colores_disponibles || [],
+          }
+        }),
+      )
+
+      setTodosLosProductos(productosConImagenes)
+    } catch (error) {
+      console.error("Error al actualizar productos:", error)
+    }
   }
 
   const handleLogout = async () => {
@@ -359,7 +362,17 @@ function App() {
 
   const calcularTotal = () => {
     return carrito.reduce((total, item) => {
-      const precioNumerico = Number.parseFloat(item.precio.replace("$", "").replace(".", ""))
+      let precioNumerico
+
+      // Verificar si el precio es un string o un número
+      if (typeof item.precio === "string") {
+        // Si es string, eliminar el símbolo $ y los puntos, luego convertir a número
+        precioNumerico = Number.parseFloat(item.precio.replace("$", "").replace(/\./g, ""))
+      } else {
+        // Si ya es un número, usarlo directamente
+        precioNumerico = item.precio
+      }
+
       return total + precioNumerico * item.cantidad
     }, 0)
   }
@@ -388,9 +401,8 @@ function App() {
   }
 
   // Añadir nuevas funciones para manejar el flujo de pedido
-  const handleContinuarPago = (direccion, datos) => {
+  const handleContinuarPago = (direccion) => {
     setDireccionEnvio(direccion)
-    // setDatosEnvio(datos);
     setMostrarInfoEnvio(false)
     setMostrarPasarelaPago(true)
   }
@@ -398,54 +410,19 @@ function App() {
   const handlePagoCompletado = async (infoPago) => {
     setInfoPago(infoPago)
 
-    try {
-      // Preparar datos del pedido
-      const pedidoData = {
-        usuario: {
-          id: usuario.id,
-          nombre: `${usuario.nombre} ${usuario.apellido}`,
-          email: usuario.email,
-        },
-        productos: carrito.map((item) => ({
-          nombre: item.nombre,
-          precio: item.precio,
-          cantidad: item.cantidad,
-          color: item.color,
-          talla: item.talla,
-        })),
-        total: calcularTotal(),
-        direccionEnvio,
-        pago: infoPago,
-      }
+    // Cerrar la pasarela de pago
+    setMostrarPasarelaPago(false)
 
-      // Enviar pedido al servidor
-      const response = await fetch("http://localhost:5000/api/pedidos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(pedidoData),
-      })
+    // Limpiar el carrito
+    setCarrito([])
+    localStorage.removeItem("carrito")
 
-      if (!response.ok) {
-        throw new Error("Error al procesar el pedido")
-      }
-
-      // Limpiar carrito
-      setCarrito([])
-    } catch (error) {
-      console.error("Error:", error)
-      alert("No se pudo procesar tu pedido. Por favor, intenta de nuevo.")
-    }
+    // Mostrar mensaje de éxito
+    alert("¡Pedido realizado con éxito! Puedes ver el estado de tu pedido en 'Mis Pedidos'.")
   }
 
   const cerrarPasarelaPago = () => {
     setMostrarPasarelaPago(false)
-    if (infoPago) {
-      // Si el pago fue exitoso, mostrar mensaje
-      alert("¡Pedido realizado con éxito! Puedes ver el estado de tu pedido en 'Mis Pedidos'.")
-      setInfoPago(null)
-    }
   }
 
   const cerrarInfoEnvio = () => {
@@ -454,13 +431,25 @@ function App() {
     setMostrarCarrito(true)
   }
 
-  // Mostrar indicador de carga mientras se verifica la sesión
-  if (loading) {
+  // Cargar carrito desde localStorage al iniciar
+  useEffect(() => {
+    const carritoGuardado = localStorage.getItem("carrito")
+    if (carritoGuardado) {
+      try {
+        setCarrito(JSON.parse(carritoGuardado))
+      } catch (e) {
+        console.error("Error al cargar carrito desde localStorage:", e)
+      }
+    }
+  }, [])
+
+  // Mostrar indicador de carga mientras se verifica la sesión o se cargan los productos
+  if (loading || loadingProductos) {
     return (
       <div className="loading-container">
         <div className="loading-spinner">
           <i className="fas fa-spinner fa-spin"></i>
-          <p>Cargando...</p>
+          <p>Cargando{loadingProductos ? " productos" : ""}...</p>
         </div>
       </div>
     )
