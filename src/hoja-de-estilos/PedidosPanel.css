@@ -420,3 +420,23 @@
 .direccion-formateada p {
     margin: 5px 0;
 }
+
+.producto-imagen-miniatura {
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    transition: transform 0.2s;
+}
+
+.producto-imagen-miniatura:hover {
+    transform: scale(1.5);
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.sin-imagen {
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

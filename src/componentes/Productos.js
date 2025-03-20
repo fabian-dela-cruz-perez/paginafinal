@@ -14,6 +14,8 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   const [imagenesSeleccionadas, setImagenesSeleccionadas] = useState({})
   // Estado para el modal de imagen ampliada
   const [imagenAmpliada, setImagenAmpliada] = useState(null)
+  // Estado para rastrear errores de carga de imágenes
+  const [imagenesConError, setImagenesConError] = useState({})
 
   const actualizarCantidad = (id, nuevaCantidad) => {
     setCantidades({
@@ -36,17 +38,57 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     })
   }
 
+  // Función para manejar errores de carga de imágenes
+  const manejarErrorImagen = (productoId, imagenIndex) => {
+    console.error(`Error al cargar imagen ${imagenIndex} del producto ${productoId}`)
+    setImagenesConError((prev) => ({
+      ...prev,
+      [`${productoId}_${imagenIndex}`]: true,
+    }))
+  }
+
   // Nueva función para actualizar la imagen seleccionada
-  const actualizarImagenSeleccionada = (productoId, imagenUrl) => {
+  const actualizarImagenSeleccionada = (productoId, imagenUrl, imagenIndex) => {
+    console.log(
+      `Seleccionando imagen ${imagenIndex} para producto ${productoId}:`,
+      imagenUrl ? imagenUrl.substring(0, 50) + "..." : "undefined",
+    )
     setImagenesSeleccionadas({
       ...imagenesSeleccionadas,
-      [productoId]: imagenUrl,
+      [productoId]: { url: imagenUrl, index: imagenIndex },
     })
   }
 
   // Función para obtener la imagen actual de un producto
-  const getImagenSeleccionada = (producto, index) => {
-    return imagenesSeleccionadas[index] || (producto.imagenes && producto.imagenes[0]) || producto.imagen
+  const getImagenSeleccionada = (producto, productoId) => {
+    // Si hay una imagen seleccionada para este producto, usarla
+    if (imagenesSeleccionadas[productoId] && imagenesSeleccionadas[productoId].url) {
+      return imagenesSeleccionadas[productoId].url
+    }
+
+    // Si no, usar la primera imagen disponible
+    if (producto.imagenes && Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
+      // Verificar si la primera imagen tiene error
+      if (imagenesConError[`${productoId}_0`]) {
+        // Buscar la primera imagen sin error
+        for (let i = 1; i < producto.imagenes.length; i++) {
+          if (!imagenesConError[`${productoId}_${i}`]) {
+            return producto.imagenes[i]
+          }
+        }
+        // Si todas tienen error, usar placeholder
+        return "/placeholder.svg"
+      }
+      return producto.imagenes[0]
+    }
+
+    // Si no hay imágenes en el array, intentar usar la propiedad imagen
+    if (producto.imagen) {
+      return producto.imagen
+    }
+
+    // Si no hay ninguna imagen, usar placeholder
+    return "/placeholder.svg"
   }
 
   // Función para mostrar la imagen ampliada
@@ -65,19 +107,32 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   }
 
   // Obtener el color seleccionado de un producto
-  const getColor = (id) => {
+  const getColor = (id, producto) => {
+    // Si el producto tiene colores disponibles, usar esos
+    if (producto && producto.colores_disponibles && producto.colores_disponibles.length > 0) {
+      return coloresSeleccionados[id] || producto.colores_disponibles[0]
+    }
     return coloresSeleccionados[id] || ""
   }
 
   // Obtener la talla seleccionada de un producto
-  const getTalla = (id) => {
+  const getTalla = (id, producto) => {
+    // Si el producto tiene tallas disponibles, usar esas
+    if (producto && producto.tallas_disponibles && producto.tallas_disponibles.length > 0) {
+      return tallasSeleccionadas[id] || producto.tallas_disponibles[0]
+    }
     return tallasSeleccionadas[id] || ""
   }
 
   // Función para determinar si mostrar selector de color
   const mostrarSelectorColor = (categoria, producto) => {
+    // Si el producto tiene colores disponibles, siempre mostrar selector
+    if (producto && producto.colores_disponibles && producto.colores_disponibles.length > 0) {
+      return true
+    }
+
     // Categorías que no necesitan selector de color
-    const categoriasColorUnico = ["Accesorios", "Gorras"]
+    const categoriasColorUnico = ["Accesorios", "Gorras",]
 
     // Verificar si es un conjunto de color único
     if (categoria === "Conjuntos" && producto && producto.colorUnico) {
@@ -88,7 +143,12 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   }
 
   // Función para determinar si mostrar selector de talla
-  const mostrarSelectorTalla = (categoria) => {
+  const mostrarSelectorTalla = (categoria, producto) => {
+    // Si el producto tiene tallas disponibles, siempre mostrar selector
+    if (producto && producto.tallas_disponibles && producto.tallas_disponibles.length > 0) {
+      return true
+    }
+
     // Categorías que no necesitan selector de talla
     const categoriasTallaUnica = ["Accesorios"]
     return !categoriasTallaUnica.includes(categoria)
@@ -96,6 +156,11 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
 
   // Función para obtener el color predeterminado según la categoría o producto
   const getColorPredeterminado = (categoria, producto) => {
+    // Si el producto tiene colores disponibles, usar el primero
+    if (producto && producto.colores_disponibles && producto.colores_disponibles.length > 0) {
+      return producto.colores_disponibles[0]
+    }
+
     // Si es un conjunto con color único, usar ese color
     if (categoria === "Conjuntos" && producto && producto.colorUnico) {
       return producto.colorUnico
@@ -112,7 +177,12 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   }
 
   // Función para obtener la talla predeterminada según la categoría
-  const getTallaPredeterminada = (categoria) => {
+  const getTallaPredeterminada = (categoria, producto) => {
+    // Si el producto tiene tallas disponibles, usar la primera
+    if (producto && producto.tallas_disponibles && producto.tallas_disponibles.length > 0) {
+      return producto.tallas_disponibles[0]
+    }
+
     switch (categoria) {
       case "Accesorios":
         return "única"
@@ -122,18 +192,41 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   }
 
   // Opciones de colores disponibles
-  const opcionesColores = [
-    { valor: "", texto: "Seleccionar color" },
-    { valor: "negro", texto: "Negro" },
-    { valor: "blanco", texto: "Blanco" },
-    { valor: "rojo", texto: "Rojo" },
-    { valor: "azul", texto: "Azul" },
-    { valor: "gris", texto: "Gris" },
-    { valor: "verde", texto: "Verde" },
-  ]
+  const getOpcionesColores = (producto) => {
+    // Si el producto tiene colores disponibles, usarlos
+    if (producto && producto.colores_disponibles && producto.colores_disponibles.length > 0) {
+      return [
+        { valor: "", texto: "Seleccionar color" },
+        ...producto.colores_disponibles.map((color) => ({
+          valor: color.toLowerCase(),
+          texto: color.charAt(0).toUpperCase() + color.slice(1).toLowerCase(),
+        })),
+      ]
+    }
 
-  // Función para obtener opciones de talla según categoría
-  const getOpcionesTallasPorCategoria = (categoria) => {
+    // Si no, usar opciones predeterminadas
+    return [
+      { valor: "", texto: "Seleccionar color" },
+      { valor: "negro", texto: "Negro" },
+      { valor: "blanco", texto: "Blanco" },
+      { valor: "rojo", texto: "Rojo" },
+      { valor: "azul", texto: "Azul" },
+      { valor: "gris", texto: "Gris" },
+      { valor: "verde", texto: "Verde" },
+    ]
+  }
+
+  // Función para obtener opciones de talla según categoría y producto
+  const getOpcionesTallas = (categoria, producto) => {
+    // Si el producto tiene tallas disponibles, usarlas
+    if (producto && producto.tallas_disponibles && producto.tallas_disponibles.length > 0) {
+      return [
+        { valor: "", texto: "Seleccionar talla" },
+        ...producto.tallas_disponibles.map((talla) => ({ valor: talla, texto: talla })),
+      ]
+    }
+
+    // Si no, usar opciones según categoría
     switch (categoria) {
       case "Gorras":
         return [
@@ -175,7 +268,10 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
         const coincideBusqueda = producto.nombre.toLowerCase().includes((searchTerm || "").toLowerCase())
 
         // Mostrar productos de la categoría seleccionada o todos si es "Todos"
-        const coincideCategoria = categoriaSeleccionada === "Todos" || producto.categoria === categoriaSeleccionada
+        const coincideCategoria =
+          categoriaSeleccionada === "Todos" ||
+          (producto.categoria_id && producto.categoria_id === categoriaSeleccionada) ||
+          (producto.categoria && producto.categoria === categoriaSeleccionada)
 
         // Solo mostrar productos que coincidan con ambos filtros
         return coincideBusqueda && coincideCategoria
@@ -187,10 +283,25 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     if (productos && productos.length > 0) {
       const nuevosColores = { ...coloresSeleccionados }
       const nuevasTallas = { ...tallasSeleccionadas }
+      const nuevasImagenes = { ...imagenesSeleccionadas }
 
       productos.forEach((producto, index) => {
+        // Establecer imagen predeterminada
+        if (
+          producto.imagenes &&
+          Array.isArray(producto.imagenes) &&
+          producto.imagenes.length > 0 &&
+          !nuevasImagenes[index]
+        ) {
+          nuevasImagenes[index] = { url: producto.imagenes[0], index: 0 }
+        }
+
+        // Establecer color predeterminado
+        if (producto.colores_disponibles && producto.colores_disponibles.length > 0 && !nuevosColores[index]) {
+          nuevosColores[index] = producto.colores_disponibles[0]
+        }
         // Si es un conjunto con color único, establecer ese color
-        if (producto.categoria === "Conjuntos" && producto.colorUnico) {
+        else if (producto.categoria === "Conjuntos" && producto.colorUnico) {
           nuevosColores[index] = producto.colorUnico
         }
         // Para otras categorías que no muestran selector de color
@@ -198,11 +309,15 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
           nuevosColores[index] = getColorPredeterminado(producto.categoria, producto)
         }
 
-        if (!mostrarSelectorTalla(producto.categoria) && !nuevasTallas[index]) {
-          nuevasTallas[index] = getTallaPredeterminada(producto.categoria)
+        // Establecer talla predeterminada
+        if (producto.tallas_disponibles && producto.tallas_disponibles.length > 0 && !nuevasTallas[index]) {
+          nuevasTallas[index] = producto.tallas_disponibles[0]
+        } else if (!mostrarSelectorTalla(producto.categoria, producto) && !nuevasTallas[index]) {
+          nuevasTallas[index] = getTallaPredeterminada(producto.categoria, producto)
         }
       })
 
+      setImagenesSeleccionadas(nuevasImagenes)
       setColoresSeleccionados(nuevosColores)
       setTallasSeleccionadas(nuevasTallas)
     }
@@ -211,8 +326,8 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
 
   // Manejar el agregar al carrito con color y talla
   const handleAgregarAlCarrito = (producto, index) => {
-    let color = getColor(index)
-    let talla = getTalla(index)
+    let color = getColor(index, producto)
+    let talla = getTalla(index, producto)
     const cantidad = getCantidad(index)
 
     // Para conjuntos de color único, usar ese color
@@ -224,8 +339,8 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
       color = color || getColorPredeterminado(producto.categoria, producto)
     }
 
-    if (!mostrarSelectorTalla(producto.categoria)) {
-      talla = talla || getTallaPredeterminada(producto.categoria)
+    if (!mostrarSelectorTalla(producto.categoria, producto)) {
+      talla = talla || getTallaPredeterminada(producto.categoria, producto)
     }
 
     // Validar solo si es necesario para este tipo de producto
@@ -234,7 +349,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
       return
     }
 
-    if (mostrarSelectorTalla(producto.categoria) && !talla) {
+    if (mostrarSelectorTalla(producto.categoria, producto) && !talla) {
       alert("Por favor selecciona una talla")
       return
     }
@@ -242,6 +357,30 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     // Llamar a la función de agregar al carrito con los datos adicionales
     onAgregarAlCarrito(producto, cantidad, color, talla)
   }
+
+  // Depurar información de productos
+  useEffect(() => {
+    if (productos && productos.length > 0) {
+      console.log("Productos cargados:", productos.length)
+      const primerProducto = productos[0]
+      console.log("Primer producto:", primerProducto.nombre)
+
+      if (primerProducto.imagenes) {
+        console.log(
+          "Imágenes del primer producto:",
+          Array.isArray(primerProducto.imagenes) ? primerProducto.imagenes.length : "No es un array",
+        )
+        if (Array.isArray(primerProducto.imagenes) && primerProducto.imagenes.length > 0) {
+          console.log(
+            "Primera imagen:",
+            primerProducto.imagenes[0] ? primerProducto.imagenes[0].substring(0, 50) + "..." : "undefined",
+          )
+        }
+      } else {
+        console.log("El primer producto no tiene propiedad 'imagenes'")
+      }
+    }
+  }, [productos])
 
   return (
     <div className="product-container">
@@ -254,22 +393,25 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
                   src={getImagenSeleccionada(producto, index) || "/placeholder.svg"}
                   alt={producto.nombre}
                   onClick={() => mostrarImagenAmpliada(getImagenSeleccionada(producto, index), producto.nombre)}
+                  onError={() => manejarErrorImagen(index, imagenesSeleccionadas[index]?.index || 0)}
                 />
               </div>
 
               {/* Galería de miniaturas */}
-              {producto.imagenes && producto.imagenes.length > 0 && (
+              {producto.imagenes && Array.isArray(producto.imagenes) && producto.imagenes.length > 0 && (
                 <div className="product-thumbnails">
                   {producto.imagenes.map((imagen, imgIndex) => (
                     <button
                       key={imgIndex}
-                      className={`thumbnail-button ${getImagenSeleccionada(producto, index) === imagen ? "selected" : ""}`}
-                      onClick={() => actualizarImagenSeleccionada(index, imagen)}
+                      className={`thumbnail-button ${imagenesSeleccionadas[index]?.index === imgIndex ? "selected" : ""
+                        }`}
+                      onClick={() => actualizarImagenSeleccionada(index, imagen, imgIndex)}
                     >
                       <img
                         src={imagen || "/placeholder.svg"}
                         alt={`${producto.nombre} vista ${imgIndex + 1}`}
                         className="thumbnail-image"
+                        onError={() => manejarErrorImagen(index, imgIndex)}
                       />
                     </button>
                   ))}
@@ -295,10 +437,10 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
                 <select
                   id={`color-${index}`}
                   className="selector-input"
-                  value={getColor(index)}
+                  value={getColor(index, producto)}
                   onChange={(e) => actualizarColor(index, e.target.value)}
                 >
-                  {opcionesColores.map((opcion) => (
+                  {getOpcionesColores(producto).map((opcion) => (
                     <option key={opcion.valor} value={opcion.valor}>
                       {opcion.texto}
                     </option>
@@ -313,7 +455,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
             )}
 
             {/* Selector de talla - condicional según categoría */}
-            {mostrarSelectorTalla(producto.categoria) ? (
+            {mostrarSelectorTalla(producto.categoria, producto) ? (
               <div className="selector-container">
                 <label htmlFor={`talla-${index}`} className="selector-label">
                   Talla:
@@ -321,10 +463,10 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
                 <select
                   id={`talla-${index}`}
                   className="selector-input"
-                  value={getTalla(index)}
+                  value={getTalla(index, producto)}
                   onChange={(e) => actualizarTalla(index, e.target.value)}
                 >
-                  {getOpcionesTallasPorCategoria(producto.categoria).map((opcion) => (
+                  {getOpcionesTallas(producto.categoria, producto).map((opcion) => (
                     <option key={opcion.valor} value={opcion.valor}>
                       {opcion.texto}
                     </option>
@@ -334,7 +476,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
             ) : (
               <div className="selector-container">
                 <label className="selector-label">Talla:</label>
-                <div className="talla-unica">{getTallaPredeterminada(producto.categoria)}</div>
+                <div className="talla-unica">{getTallaPredeterminada(producto.categoria, producto)}</div>
               </div>
             )}
 
@@ -373,7 +515,15 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
             </button>
             <h3>{imagenAmpliada.nombre}</h3>
             <div className="imagen-ampliada-container">
-              <img src={imagenAmpliada.url || "/placeholder.svg"} alt={imagenAmpliada.nombre} />
+              <img
+                src={imagenAmpliada.url || "/placeholder.svg"}
+                alt={imagenAmpliada.nombre}
+                onError={(e) => {
+                  console.error("Error al cargar imagen ampliada")
+                  e.target.onerror = null
+                  e.target.src = "/placeholder.svg"
+                }}
+              />
             </div>
           </div>
         </div>

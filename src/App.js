@@ -1,7 +1,7 @@
 "use client"
 import "./App.css"
 import AdminPagos from "../src/componentes/AdminPagos"
-import AdminProductos from "./componentes/AdminProductos"
+import AdminProductos from "./componentes/AdminProductos.js"
 import Navbar from "./componentes/NavBar.js"
 
 import "./hoja-de-estilos/Logo.css"
@@ -123,11 +123,12 @@ function App() {
     }
   }, [])
 
-  // Nuevo useEffect para cargar productos desde Supabase
+  // Modificado: useEffect para cargar productos desde Supabase
   useEffect(() => {
     const cargarProductos = async () => {
       try {
         setLoadingProductos(true)
+        console.log("Cargando productos desde Supabase...")
 
         // Obtener productos de la base de datos
         const { data: productosData, error } = await supabase
@@ -146,45 +147,47 @@ function App() {
           return
         }
 
-        // Obtener imágenes para cada producto
-        const productosConImagenes = await Promise.all(
-          productosData.map(async (producto) => {
-            // Obtener imágenes del producto
-            const { data: imagenesData, error: imagenesError } = await supabase
-              .from("imagenes")
-              .select("*")
-              .eq("producto_id", producto.id)
-              .order("orden")
+        console.log(`Se encontraron ${productosData.length} productos en la base de datos`)
 
-            if (imagenesError) {
-              console.error(`Error al cargar imágenes para producto ${producto.id}:`, imagenesError)
-              return {
-                ...producto,
-                imagen: "/placeholder.svg",
-                imagenes: ["/placeholder.svg"],
-              }
-            }
+        // Formatear productos directamente sin buscar imágenes en otra tabla
+        const productosFormateados = productosData.map((producto) => {
+          // Usar directamente el array de imágenes del producto
+          const imagenes = Array.isArray(producto.imagenes) ? producto.imagenes : []
 
-            // Formatear el producto con sus imágenes
-            const imagenes =
-              imagenesData && imagenesData.length > 0 ? imagenesData.map((img) => img.url) : ["/placeholder.svg"]
+          return {
+            id: producto.id,
+            nombre: producto.nombre,
+            descripcion: producto.descripcion,
+            precio: `$${producto.precio.toLocaleString("es-ES")}`,
+            categoria: producto.categorias ? producto.categorias.nombre : "Sin categoría",
+            categoria_id: producto.categoria_id,
+            colorUnico: producto.color_unico || null,
+            // Usar la primera imagen del array o un placeholder
+            imagen: imagenes.length > 0 ? imagenes[0] : "/placeholder.svg",
+            // Guardar todo el array de imágenes
+            imagenes: imagenes.length > 0 ? imagenes : ["/placeholder.svg"],
+            tallas_disponibles: Array.isArray(producto.tallas_disponibles) ? producto.tallas_disponibles : [],
+            colores_disponibles: Array.isArray(producto.colores_disponibles) ? producto.colores_disponibles : [],
+          }
+        })
 
-            return {
-              id: producto.id,
-              nombre: producto.nombre,
-              descripcion: producto.descripcion,
-              precio: `$${producto.precio.toLocaleString("es-ES")}`, // Asegurarse que sea string
-              categoria: producto.categorias ? producto.categorias.nombre : "Sin categoría",
-              colorUnico: producto.color_unico || null,
-              imagen: imagenes[0],
-              imagenes: imagenes,
-              tallas_disponibles: producto.tallas_disponibles || [],
-              colores_disponibles: producto.colores_disponibles || [],
-            }
-          }),
-        )
+        console.log("Productos formateados:", productosFormateados.length)
+        // Mostrar información de depuración del primer producto
+        if (productosFormateados.length > 0) {
+          const primerProducto = productosFormateados[0]
+          console.log("Primer producto:", primerProducto.nombre)
+          console.log("Imágenes:", primerProducto.imagenes.length)
+          if (primerProducto.imagenes.length > 0) {
+            console.log(
+              "Primera imagen:",
+              typeof primerProducto.imagenes[0] === "string"
+                ? primerProducto.imagenes[0].substring(0, 50) + "..."
+                : "No es una cadena",
+            )
+          }
+        }
 
-        setTodosLosProductos(productosConImagenes)
+        setTodosLosProductos(productosFormateados)
       } catch (error) {
         console.error("Error al cargar productos:", error)
       } finally {
@@ -288,8 +291,10 @@ function App() {
     setMostrarAdminProductos(!mostrarAdminProductos)
   }
 
-  // Función para manejar productos agregados desde el panel de administración
+  // Modificado: Función para manejar productos agregados desde el panel de administración
   const handleProductoAgregado = async (nuevoProducto) => {
+    console.log("Producto agregado, recargando productos...")
+
     // Recargar los productos después de agregar uno nuevo
     try {
       const { data, error } = await supabase
@@ -305,45 +310,30 @@ function App() {
 
       if (error) throw error
 
-      // Actualizar el estado con los productos actualizados
-      const productosConImagenes = await Promise.all(
-        data.map(async (producto) => {
-          // Obtener imágenes del producto
-          const { data: imagenesData, error: imagenesError } = await supabase
-            .from("imagenes")
-            .select("*")
-            .eq("producto_id", producto.id)
-            .order("orden")
+      // Formatear productos directamente sin buscar imágenes en otra tabla
+      const productosFormateados = data.map((producto) => {
+        // Usar directamente el array de imágenes del producto
+        const imagenes = Array.isArray(producto.imagenes) ? producto.imagenes : []
 
-          if (imagenesError) {
-            console.error(`Error al cargar imágenes para producto ${producto.id}:`, imagenesError)
-            return {
-              ...producto,
-              imagen: "/placeholder.svg",
-              imagenes: ["/placeholder.svg"],
-            }
-          }
+        return {
+          id: producto.id,
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          precio: `$${producto.precio.toLocaleString("es-ES")}`,
+          categoria: producto.categorias ? producto.categorias.nombre : "Sin categoría",
+          categoria_id: producto.categoria_id,
+          colorUnico: producto.color_unico || null,
+          // Usar la primera imagen del array o un placeholder
+          imagen: imagenes.length > 0 ? imagenes[0] : "/placeholder.svg",
+          // Guardar todo el array de imágenes
+          imagenes: imagenes.length > 0 ? imagenes : ["/placeholder.svg"],
+          tallas_disponibles: Array.isArray(producto.tallas_disponibles) ? producto.tallas_disponibles : [],
+          colores_disponibles: Array.isArray(producto.colores_disponibles) ? producto.colores_disponibles : [],
+        }
+      })
 
-          // Formatear el producto con sus imágenes
-          const imagenes =
-            imagenesData && imagenesData.length > 0 ? imagenesData.map((img) => img.url) : ["/placeholder.svg"]
-
-          return {
-            id: producto.id,
-            nombre: producto.nombre,
-            descripcion: producto.descripcion,
-            precio: `$${producto.precio.toLocaleString("es-ES")}`,
-            categoria: producto.categorias ? producto.categorias.nombre : "Sin categoría",
-            colorUnico: producto.color_unico || null,
-            imagen: imagenes[0],
-            imagenes: imagenes,
-            tallas_disponibles: producto.tallas_disponibles || [],
-            colores_disponibles: producto.colores_disponibles || [],
-          }
-        }),
-      )
-
-      setTodosLosProductos(productosConImagenes)
+      console.log("Productos actualizados:", productosFormateados.length)
+      setTodosLosProductos(productosFormateados)
     } catch (error) {
       console.error("Error al actualizar productos:", error)
     }
@@ -522,7 +512,16 @@ function App() {
                   {carrito.map((item) => (
                     <li key={item.id}>
                       <div className="producto-carrito">
-                        <img src={item.imagen || "/placeholder.svg"} alt={item.nombre} className="carrito-imagen" />
+                        <img
+                          src={item.imagen || "/placeholder.svg"}
+                          alt={item.nombre}
+                          className="carrito-imagen"
+                          onError={(e) => {
+                            console.error(`Error al cargar imagen en carrito: ${item.nombre}`)
+                            e.target.onerror = null
+                            e.target.src = "/placeholder.svg"
+                          }}
+                        />
                         <div className="carrito-detalles">
                           <h3>{item.nombre}</h3>
                           <div>

@@ -79,7 +79,8 @@ function PedidosPanel({ onClose }) {
                             id,
                             nombre,
                             descripcion,
-                            precio
+                            precio,
+                            imagenes
                         )
                     `)
                             .eq("pedido_id", pedido.id)
@@ -95,6 +96,8 @@ function PedidosPanel({ onClose }) {
                                 color: item.color || "N/A",
                                 talla: item.talla || "N/A",
                                 subtotal: (item.precio_unitario || 0) * (item.cantidad || 1),
+                                imagenes: item.productos?.imagenes || null,
+                                id: item.productos?.id || null,
                             }))
 
                             return {
@@ -119,6 +122,8 @@ function PedidosPanel({ onClose }) {
                                 color: item.color || "N/A",
                                 talla: item.talla || "N/A",
                                 subtotal: item.subtotal || 0,
+                                imagenes: null,
+                                id: null,
                             }))
 
                             return {
@@ -255,9 +260,10 @@ function PedidosPanel({ onClose }) {
     const cerrarDetalles = () => {
         setPedidoSeleccionado(null)
         setEstadoSeleccionado("")
+        setError("") // Limpiar cualquier error previo
     }
 
-    // Actualizar estado del pedido
+    // Actualizar estado del pedido - Método corregido
     const actualizarEstadoPedido = async () => {
         if (!pedidoSeleccionado || estadoSeleccionado === pedidoSeleccionado.estado) {
             return
@@ -266,12 +272,12 @@ function PedidosPanel({ onClose }) {
         setActualizandoEstado(true)
 
         try {
-            // Actualizar en Supabase
+            // Actualizar directamente solo el campo estado
             const { error } = await supabase
                 .from("pedidos")
                 .update({
                     estado: estadoSeleccionado,
-                    fecha_actualizacion: new Date().toISOString(),
+                    // No incluir updated_at, la base de datos lo manejará automáticamente
                 })
                 .eq("id", pedidoSeleccionado.id)
 
@@ -301,7 +307,7 @@ function PedidosPanel({ onClose }) {
         }
     }
 
-    // Eliminar pedido
+    // Eliminar pedido - Método corregido
     const eliminarPedido = async () => {
         if (!pedidoSeleccionado) {
             return
@@ -312,15 +318,41 @@ function PedidosPanel({ onClose }) {
         }
 
         try {
-            // Primero eliminar los productos asociados al pedido
+            // Primero verificar si hay pagos asociados
+            const { data: pagosAsociados, error: errorPagos } = await supabase
+                .from("pagos")
+                .select("id")
+                .eq("pedido_id", pedidoSeleccionado.id)
+
+            if (errorPagos) throw errorPagos
+
+            // Si hay pagos asociados, eliminarlos primero
+            if (pagosAsociados && pagosAsociados.length > 0) {
+                const { error: errorEliminarPagos } = await supabase
+                    .from("pagos")
+                    .delete()
+                    .eq("pedido_id", pedidoSeleccionado.id)
+
+                if (errorEliminarPagos) throw errorEliminarPagos
+            }
+
+            // Luego eliminar los detalles del pedido
+            const { error: errorDetalles } = await supabase
+                .from("detalles_pedido")
+                .delete()
+                .eq("pedido_id", pedidoSeleccionado.id)
+
+            if (errorDetalles) console.error("Error al eliminar detalles:", errorDetalles)
+
+            // Eliminar los productos asociados al pedido
             const { error: errorProductos } = await supabase
                 .from("pedido_productos")
                 .delete()
                 .eq("pedido_id", pedidoSeleccionado.id)
 
-            if (errorProductos) throw errorProductos
+            if (errorProductos) console.error("Error al eliminar productos:", errorProductos)
 
-            // Eliminar en Supabase
+            // Finalmente eliminar el pedido
             const { error } = await supabase.from("pedidos").delete().eq("id", pedidoSeleccionado.id)
 
             if (error) throw error
@@ -349,6 +381,52 @@ function PedidosPanel({ onClose }) {
         } catch (error) {
             console.error("Error al eliminar pedido:", error)
             alert("Error al eliminar el pedido: " + error.message)
+        }
+    }
+
+    // Obtener la imagen de un producto (puede ser URL o Base64)
+    const obtenerImagenProducto = (imagenes) => {
+        if (!imagenes) return null
+
+        try {
+            // Si es un string JSON, parsearlo
+            if (typeof imagenes === "string") {
+                // Verificar si es una URL directa
+                if (imagenes.startsWith("http") || imagenes.startsWith("/")) {
+                    return imagenes
+                }
+
+                // Intentar parsear como JSON
+                try {
+                    const imagenesArray = JSON.parse(imagenes)
+                    if (Array.isArray(imagenesArray) && imagenesArray.length > 0) {
+                        return imagenesArray[0]
+                    }
+                    // Si es un objeto con una propiedad url
+                    if (imagenesArray && imagenesArray.url) {
+                        return imagenesArray.url
+                    }
+                    return null
+                } catch (e) {
+                    // Si no es JSON válido, devolver como está (podría ser base64)
+                    return imagenes
+                }
+            }
+
+            // Si ya es un array
+            if (Array.isArray(imagenes) && imagenes.length > 0) {
+                return imagenes[0]
+            }
+
+            // Si es un objeto con una propiedad url
+            if (imagenes && imagenes.url) {
+                return imagenes.url
+            }
+
+            return null
+        } catch (error) {
+            console.error("Error al procesar imágenes:", error)
+            return null
         }
     }
 
@@ -563,6 +641,7 @@ function PedidosPanel({ onClose }) {
                                         <table className="productos-table">
                                             <thead>
                                                 <tr>
+                                                    <th>Imagen</th>
                                                     <th>Producto</th>
                                                     <th>Precio</th>
                                                     <th>Cantidad</th>
@@ -575,6 +654,30 @@ function PedidosPanel({ onClose }) {
                                                 {pedidoSeleccionado.productos && pedidoSeleccionado.productos.length > 0 ? (
                                                     pedidoSeleccionado.productos.map((producto, index) => (
                                                         <tr key={index}>
+                                                            <td>
+                                                                {obtenerImagenProducto(producto.imagenes) ? (
+                                                                    <img
+                                                                        src={obtenerImagenProducto(producto.imagenes) || "/placeholder.svg"}
+                                                                        alt={producto.nombre}
+                                                                        className="producto-imagen-miniatura"
+                                                                        style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                                                                    />
+                                                                ) : (
+                                                                    <div
+                                                                        className="sin-imagen"
+                                                                        style={{
+                                                                            width: "50px",
+                                                                            height: "50px",
+                                                                            background: "#f0f0f0",
+                                                                            display: "flex",
+                                                                            alignItems: "center",
+                                                                            justifyContent: "center",
+                                                                        }}
+                                                                    >
+                                                                        <i className="fas fa-image" style={{ color: "#ccc" }}></i>
+                                                                    </div>
+                                                                )}
+                                                            </td>
                                                             <td>{producto.nombre}</td>
                                                             <td>
                                                                 $
@@ -595,7 +698,7 @@ function PedidosPanel({ onClose }) {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="6" style={{ textAlign: "center" }}>
+                                                        <td colSpan="7" style={{ textAlign: "center" }}>
                                                             No hay productos disponibles
                                                         </td>
                                                     </tr>
