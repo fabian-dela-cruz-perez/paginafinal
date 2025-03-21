@@ -3,13 +3,14 @@ import { useState, useEffect } from "react"
 import { supabase } from "../utils/supabase.ts"
 import "../hoja-de-estilos/MisPedidos.css"
 
-function MisPedidosComponent({ onClose, userId }) {
+function MisPedidos({ onClose, userId }) {
     const [pedidos, setPedidos] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
     const [productosPedido, setProductosPedido] = useState([])
     const [loadingProductos, setLoadingProductos] = useState(false)
+    const [estadoPago, setEstadoPago] = useState("pendiente")
 
     // Cargar pedidos del usuario
     useEffect(() => {
@@ -62,6 +63,31 @@ function MisPedidosComponent({ onClose, userId }) {
             }
 
             console.log("Productos del pedido cargados:", productosData)
+
+            // Obtener estado del pago
+            const { data: pagoData, error: pagoError } = await supabase
+                .from("pagos")
+                .select("estado, comprobante_verificado")
+                .eq("pedido_id", pedidoId)
+                .single()
+
+            // Establecer el estado del pago
+            if (!pagoError && pagoData) {
+                setEstadoPago(
+                    pagoData.comprobante_verificado ? "verificado" : pagoData.estado === "rechazado" ? "rechazado" : "pendiente",
+                )
+            } else {
+                // Si no hay registro en pagos, verificar si hay información en el pedido
+                const { data: pedidoData } = await supabase
+                    .from("pedidos")
+                    .select("pago_verificado, estado")
+                    .eq("id", pedidoId)
+                    .single()
+
+                setEstadoPago(
+                    pedidoData?.pago_verificado ? "verificado" : pedidoData?.estado === "cancelado" ? "rechazado" : "pendiente",
+                )
+            }
 
             // Para cada producto del pedido, obtenemos la información completa del producto
             const productosConDetalles = await Promise.all(
@@ -177,6 +203,34 @@ function MisPedidosComponent({ onClose, userId }) {
         }
     }
 
+    // Obtener clase CSS según el estado del pago
+    const getEstadoPagoClass = (estado) => {
+        switch (estado) {
+            case "verificado":
+                return "pago-verificado"
+            case "rechazado":
+                return "pago-rechazado"
+            case "pendiente":
+                return "pago-pendiente"
+            default:
+                return ""
+        }
+    }
+
+    // Obtener texto según el estado del pago
+    const getEstadoPagoText = (estado) => {
+        switch (estado) {
+            case "verificado":
+                return "Pago verificado"
+            case "rechazado":
+                return "Pago rechazado"
+            case "pendiente":
+                return "Pago pendiente de verificación"
+            default:
+                return "Estado de pago desconocido"
+        }
+    }
+
     // Cerrar modal de detalles
     const cerrarDetalles = () => {
         setPedidoSeleccionado(null)
@@ -208,6 +262,21 @@ function MisPedidosComponent({ onClose, userId }) {
                         </div>
                     ) : pedidoSeleccionado ? (
                         <div className="detalles-pedido">
+                            <div className="estado-pago-banner">
+                                <div className={`estado-pago-indicator ${getEstadoPagoClass(estadoPago)}`}>
+                                    <i
+                                        className={
+                                            estadoPago === "verificado"
+                                                ? "fas fa-check-circle"
+                                                : estadoPago === "rechazado"
+                                                    ? "fas fa-times-circle"
+                                                    : "fas fa-clock"
+                                        }
+                                    ></i>
+                                    <span>{getEstadoPagoText(estadoPago)}</span>
+                                </div>
+                            </div>
+
                             <div className="detalles-grid">
                                 <div className="detalles-seccion">
                                     <h3>Información del Pedido</h3>
@@ -385,5 +454,5 @@ function MisPedidosComponent({ onClose, userId }) {
     )
 }
 
-export default MisPedidosComponent
+export default MisPedidos
 

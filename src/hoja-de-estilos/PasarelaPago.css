@@ -3,9 +3,9 @@
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -14,325 +14,402 @@
 
 .pasarela-modal {
     background-color: white;
-    border-radius: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
     max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .pasarela-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
     background-color: #f8f9fa;
-    border-radius: 12px 12px 0 0;
 }
 
 .pasarela-header h2 {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     color: #333;
-    font-weight: 600;
 }
 
 .cerrar-modal {
     background: none;
     border: none;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     cursor: pointer;
     color: #666;
-    transition: color 0.2s;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 }
 
 .cerrar-modal:hover {
-    color: #000;
     background-color: #f0f0f0;
+    color: #333;
 }
 
 .pasarela-content {
     padding: 24px;
+    overflow-y: auto;
+    flex: 1;
 }
 
-.pasarela-footer {
-    padding: 16px 20px;
-    border-top: 1px solid #eee;
+.error-mensaje {
+    background-color: #fff3f3;
+    border: 1px solid #ffcccb;
+    color: #d32f2f;
+    padding: 16px;
+    border-radius: 4px;
     display: flex;
-    justify-content: flex-end;
-    background-color: #f8f9fa;
-    border-radius: 0 0 12px 12px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-/* Estilos para formularios */
+.exito-mensaje {
+    background-color: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    color: #2e7d32;
+    padding: 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+/* Estilos para el formulario de envío */
+.form-envio {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .form-group {
-    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.form-group textarea {
+    resize: vertical;
 }
 
 .form-row {
     display: flex;
-    gap: 15px;
-    margin-bottom: 18px;
+    gap: 16px;
 }
 
 .form-row .form-group {
     flex: 1;
-    margin-bottom: 0;
 }
 
-label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: #444;
-    font-size: 0.95rem;
+/* Estilos para la pasarela de pago */
+.total-pagar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
 }
 
-input[type="text"],
-input[type="tel"],
-textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.2s;
-    background-color: #fff;
-}
-
-input[type="text"]:focus,
-input[type="tel"]:focus,
-textarea:focus {
-    border-color: #4a90e2;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
-
-input.disabled {
-    background-color: #f5f5f5;
-    cursor: not-allowed;
-}
-
-.referencia-ayuda {
-    display: block;
-    margin-top: 5px;
-    color: #666;
-    font-size: 0.85rem;
-}
-
-/* Estilos para métodos de pago */
-.metodos-titulo {
-    margin-bottom: 15px;
+.total-pagar span {
     font-size: 1.1rem;
-    color: #333;
     font-weight: 500;
+    color: #333;
+}
+
+.precio-total {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2e7d32;
+}
+
+.metodos-titulo {
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 16px;
 }
 
 .metodos-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin-bottom: 24px;
 }
 
 .metodo-item {
     display: flex;
-    align-items: flex-start;
-    padding: 14px 16px;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    margin-bottom: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s;
 }
 
 .metodo-item:hover {
-    background-color: #f9f9f9;
-    border-color: #ccc;
+    background-color: #f0f0f0;
 }
 
 .metodo-item.seleccionado {
-    border-color: #4a90e2;
-    background-color: rgba(74, 144, 226, 0.05);
+    background-color: #e3f2fd;
+    border-color: #1565c0;
 }
 
 .metodo-item input[type="radio"] {
-    margin-top: 3px;
-    margin-right: 12px;
-    cursor: pointer;
+    display: none;
 }
 
 .metodo-label {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    gap: 12px;
     cursor: pointer;
     width: 100%;
 }
 
 .metodo-label i {
-    font-size: 1.3rem;
-    margin-right: 14px;
+    font-size: 1.5rem;
     color: #555;
-    margin-top: 2px;
 }
 
 .metodo-titulo {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-weight: 500;
     color: #333;
+    display: block;
 }
 
 .metodo-descripcion {
-    display: block;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #666;
-    line-height: 1.4;
+    display: block;
 }
 
-/* Estilos para total a pagar */
-.total-pagar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
+.referencia-ayuda {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 4px;
+    display: block;
+}
+
+.form-pago input:disabled {
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+}
+
+.form-pago input.disabled::placeholder {
+    color: #aaa;
+}
+
+/* Estilos para el pie de página */
+.pasarela-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
     background-color: #f8f9fa;
-    border-radius: 10px;
-    margin-bottom: 24px;
-    border: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
 }
 
-.precio-total {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
-}
-
-/* Estilos para botones */
 .botones-accion {
     display: flex;
     gap: 12px;
 }
 
 .btn-cancelar,
-.btn-volver {
-    padding: 12px 18px;
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    color: #555;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-cancelar:hover,
-.btn-volver:hover {
-    background-color: #e9e9e9;
-}
-
 .btn-continuar,
-.btn-confirmar {
-    padding: 12px 24px;
-    background-color: #4a90e2;
-    color: white;
+.btn-confirmar,
+.btn-volver {
+    padding: 10px 16px;
     border: none;
-    border-radius: 8px;
-    font-weight: 500;
+    border-radius: 4px;
     cursor: pointer;
+    font-weight: 500;
     transition: background-color 0.2s;
 }
 
-.btn-continuar:hover,
+.btn-cancelar {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.btn-cancelar:hover {
+    background-color: #e0e0e0;
+}
+
+.btn-continuar {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-continuar:hover {
+    background-color: #0069d9;
+}
+
+.btn-confirmar {
+    background-color: #2e7d32;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .btn-confirmar:hover {
-    background-color: #3a7bc8;
+    background-color: #225d25;
 }
 
 .btn-confirmar:disabled {
-    background-color: #a0c3e8;
+    background-color: #cccccc;
     cursor: not-allowed;
 }
 
-.btn-confirmar i {
-    margin-right: 8px;
+.btn-volver {
+    background-color: #f5f5f5;
+    color: #333;
 }
 
-/* Estilos para mensajes */
-.error-mensaje {
-    background-color: #fff2f2;
-    border-left: 4px solid #ff4d4f;
-    color: #cf1322;
-    padding: 12px 16px;
-    margin: 0;
-    border-bottom: 1px solid #ffccc7;
+.btn-volver:hover {
+    background-color: #e0e0e0;
+}
+
+/* Comprobante styles */
+.comprobante-group {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.comprobante-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.file-label:hover {
+    background-color: #bbdefb;
+}
+
+.file-info {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    border-radius: 4px;
 }
 
-.error-mensaje i {
-    margin-right: 10px;
-    font-size: 1.1rem;
+.btn-eliminar-archivo {
+    background: none;
+    border: none;
+    color: #f44336;
+    cursor: pointer;
+    padding: 5px;
 }
 
-.exito-mensaje {
-    background-color: #f6ffed;
-    border-left: 4px solid #52c41a;
-    color: #389e0d;
-    padding: 12px 16px;
-    margin: 0;
-    border-bottom: 1px solid #b7eb8f;
+.comprobante-preview {
+    margin-top: 15px;
+    max-width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.comprobante-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    display: block;
+}
+
+.comprobante-ayuda {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+/* Estilos para guardar comprobante */
+.btn-guardar-comprobante {
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 10px 16px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
 }
 
-.exito-mensaje i {
-    margin-right: 10px;
-    font-size: 1.1rem;
+.btn-guardar-comprobante:hover {
+    background-color: #43a047;
+}
+
+.comprobante-guardado {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-radius: 4px;
+}
+
+.comprobante-guardado i {
+    color: #2e7d32;
 }
 
 /* Responsive */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
     .form-row {
         flex-direction: column;
-        gap: 15px;
-    }
-
-    .pasarela-modal {
-        width: 95%;
-        max-height: 85vh;
-    }
-
-    .pasarela-header h2 {
-        font-size: 1.2rem;
-    }
-
-    .botones-accion {
-        width: 100%;
-    }
-
-    .btn-cancelar,
-    .btn-volver,
-    .btn-continuar,
-    .btn-confirmar {
-        flex: 1;
-        text-align: center;
     }
 }

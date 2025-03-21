@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "../utils/supabase.ts"
+import AdminPagosSimplificado from "./AdminPagos"
 import "../hoja-de-estilos/PedidosPanel.css"
 
 function PedidosPanel({ onClose }) {
@@ -10,10 +11,13 @@ function PedidosPanel({ onClose }) {
     const [error, setError] = useState("")
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
     const [estadoSeleccionado, setEstadoSeleccionado] = useState("")
+    const [estadoPagoSeleccionado, setEstadoPagoSeleccionado] = useState("")
     const [actualizandoEstado, setActualizandoEstado] = useState(false)
+    const [actualizandoPago, setActualizandoPago] = useState(false)
     const [filtroEstado, setFiltroEstado] = useState("Todos")
     const [busqueda, setBusqueda] = useState("")
     const [isAdmin, setIsAdmin] = useState(false)
+    const [mostrarPagos, setMostrarPagos] = useState(false)
 
     useEffect(() => {
         const checkAdminAndFetchPedidos = async () => {
@@ -85,7 +89,21 @@ function PedidosPanel({ onClose }) {
                     `)
                             .eq("pedido_id", pedido.id)
 
-                        console.log(`Productos encontrados para pedido ${pedido.id}:`, productosRelacion)
+                        // Obtener información de pago
+                        const { data: pagoData, error: pagoError } = await supabase
+                            .from("pagos")
+                            .select("*")
+                            .eq("pedido_id", pedido.id)
+                            .single()
+
+                        let estadoPago = "pendiente"
+                        if (!pagoError && pagoData) {
+                            estadoPago = pagoData.comprobante_verificado
+                                ? "verificado"
+                                : pagoData.estado === "rechazado"
+                                    ? "rechazado"
+                                    : "pendiente"
+                        }
 
                         if (!productosError && productosRelacion && productosRelacion.length > 0) {
                             // Si hay productos en pedido_productos, usarlos
@@ -104,6 +122,8 @@ function PedidosPanel({ onClose }) {
                                 ...pedido,
                                 usuario: pedido.usuarios,
                                 productos: productosFormateados,
+                                pago: pagoData || null,
+                                estadoPago: estadoPago,
                             }
                         }
 
@@ -130,6 +150,8 @@ function PedidosPanel({ onClose }) {
                                 ...pedido,
                                 usuario: pedido.usuarios,
                                 productos: productosFormateados,
+                                pago: pagoData || null,
+                                estadoPago: estadoPago,
                             }
                         }
 
@@ -138,6 +160,8 @@ function PedidosPanel({ onClose }) {
                             ...pedido,
                             usuario: pedido.usuarios,
                             productos: [],
+                            pago: pagoData || null,
+                            estadoPago: estadoPago,
                         }
                     }),
                 )
@@ -188,6 +212,19 @@ function PedidosPanel({ onClose }) {
                 return "estado-cancelado"
             default:
                 return ""
+        }
+    }
+
+    // Obtener clase CSS según el estado del pago
+    const getEstadoPagoClass = (estado) => {
+        switch (estado) {
+            case "verificado":
+                return "pago-verificado"
+            case "rechazado":
+                return "pago-rechazado"
+            case "pendiente":
+            default:
+                return "pago-pendiente"
         }
     }
 
@@ -254,12 +291,14 @@ function PedidosPanel({ onClose }) {
     const verDetallesPedido = (pedido) => {
         setPedidoSeleccionado(pedido)
         setEstadoSeleccionado(pedido.estado)
+        setEstadoPagoSeleccionado(pedido.estadoPago || "pendiente")
     }
 
     // Cerrar detalles del pedido
     const cerrarDetalles = () => {
         setPedidoSeleccionado(null)
         setEstadoSeleccionado("")
+        setEstadoPagoSeleccionado("")
         setError("") // Limpiar cualquier error previo
     }
 
@@ -272,12 +311,12 @@ function PedidosPanel({ onClose }) {
         setActualizandoEstado(true)
 
         try {
-            // Actualizar directamente solo el campo estado
+            // Actualizar directamente solo el campo estado sin incluir updated_at
             const { error } = await supabase
                 .from("pedidos")
                 .update({
                     estado: estadoSeleccionado,
-                    // No incluir updated_at, la base de datos lo manejará automáticamente
+                    // No incluir updated_at, la base de datos lo manejará automáticamente si existe
                 })
                 .eq("id", pedidoSeleccionado.id)
 
@@ -304,6 +343,103 @@ function PedidosPanel({ onClose }) {
             alert("Error al actualizar el estado del pedido: " + error.message)
         } finally {
             setActualizandoEstado(false)
+        }
+    }
+
+    // Actualizar estado del pago - MÉTODO CORREGIDO
+    const actualizarEstadoPago = async () => {
+        if (!pedidoSeleccionado || estadoPagoSeleccionado === pedidoSeleccionado.estadoPago) {
+            return
+        }
+
+        setActualizandoPago(true)
+
+        try {
+            // Verificar si existe un registro en la tabla pagos
+            const { data: pagoExistente, error: errorConsulta } = await supabase
+                .from("pagos")
+                .select("id")
+                .eq("pedido_id", pedidoSeleccionado.id)
+                .single()
+
+            if (errorConsulta && errorConsulta.code !== "PGRST116") {
+                // Si hay un error que no sea "no se encontró registro"
+                throw errorConsulta
+            }
+
+            // Si existe un registro de pago, actualizarlo
+            if (pagoExistente) {
+                const { error: errorActualizacion } = await supabase
+                    .from("pagos")
+                    .update({
+                        comprobante_verificado: estadoPagoSeleccionado === "verificado",
+                        estado: estadoPagoSeleccionado === "rechazado" ? "rechazado" : "procesado",
+                        fecha_verificacion: new Date().toISOString(),
+                    })
+                    .eq("id", pagoExistente.id)
+
+                if (errorActualizacion) {
+                    console.error("Error al actualizar pago:", errorActualizacion)
+                    throw errorActualizacion
+                }
+            } else {
+                // Si no existe, crear un nuevo registro
+                const { error: errorInsercion } = await supabase.from("pagos").insert([
+                    {
+                        pedido_id: pedidoSeleccionado.id,
+                        metodo: pedidoSeleccionado.metodo_pago || "no especificado",
+                        referencia: pedidoSeleccionado.referencia_pago || "",
+                        estado:
+                            estadoPagoSeleccionado === "rechazado"
+                                ? "rechazado"
+                                : estadoPagoSeleccionado === "verificado"
+                                    ? "verificado"
+                                    : "pendiente",
+                        fecha: new Date().toISOString(),
+                        fecha_verificacion: new Date().toISOString(),
+                        monto: pedidoSeleccionado.total || 0,
+                        comprobante_verificado: estadoPagoSeleccionado === "verificado",
+                    },
+                ])
+
+                if (errorInsercion) {
+                    console.error("Error al insertar pago:", errorInsercion)
+                    throw errorInsercion
+                }
+            }
+
+            // Crear notificación para el usuario
+            let mensajeNotificacion = ""
+            if (estadoPagoSeleccionado === "verificado") {
+                mensajeNotificacion = "Tu pago ha sido verificado correctamente."
+            } else if (estadoPagoSeleccionado === "rechazado") {
+                mensajeNotificacion = "Tu pago ha sido rechazado. Por favor, contacta con atención al cliente."
+            } else {
+                mensajeNotificacion = "El estado de tu pago ha sido actualizado."
+            }
+
+            await supabase.from("notificaciones").insert({
+                usuario_id: pedidoSeleccionado.usuario.id,
+                tipo: "pago_actualizado",
+                mensaje: mensajeNotificacion,
+                leida: false,
+                fecha: new Date().toISOString(),
+            })
+
+            // Actualizar el pedido en la lista
+            setPedidos(
+                pedidos.map((p) => (p.id === pedidoSeleccionado.id ? { ...p, estadoPago: estadoPagoSeleccionado } : p)),
+            )
+
+            // Actualizar el pedido seleccionado
+            setPedidoSeleccionado({ ...pedidoSeleccionado, estadoPago: estadoPagoSeleccionado })
+
+            alert("Estado del pago actualizado correctamente")
+        } catch (error) {
+            console.error("Error al actualizar estado del pago:", error)
+            alert("Error al actualizar el estado del pago: " + error.message)
+        } finally {
+            setActualizandoPago(false)
         }
     }
 
@@ -450,6 +586,32 @@ function PedidosPanel({ onClose }) {
         return true
     })
 
+    // Añade esta función para formatear el método de pago de manera más legible
+    const formatMetodoPago = (metodo) => {
+        if (!metodo) return "No especificado"
+
+        switch (metodo.toLowerCase()) {
+            case "nequi":
+                return "Nequi"
+            case "transferencia":
+                return "Transferencia Bancaria"
+            case "contraentrega":
+                return "Pago contra entrega"
+            default:
+                return metodo.charAt(0).toUpperCase() + metodo.slice(1)
+        }
+    }
+
+    // Cambiar a la vista de pagos
+    const mostrarPanelPagos = () => {
+        setMostrarPagos(true)
+    }
+
+    // Volver a la vista de pedidos
+    const volverAPedidos = () => {
+        setMostrarPagos(false)
+    }
+
     if (!isAdmin) {
         return (
             <div className="pedidos-panel-overlay">
@@ -471,11 +633,29 @@ function PedidosPanel({ onClose }) {
         )
     }
 
+    // Si se está mostrando el panel de pagos
+    if (mostrarPagos) {
+        return (
+            <AdminPagosSimplificado
+                onClose={onClose}
+                volverAPedidos={volverAPedidos}
+                actualizarPedidos={setPedidos}
+                pedidos={pedidos}
+            />
+        )
+    }
+
     return (
         <div className="pedidos-modal-overlay">
             <div className="pedidos-modal">
                 <div className="pedidos-header">
                     <h2>Panel de Pedidos</h2>
+                    <div className="panel-tabs">
+                        <button className="tab-button active">Pedidos</button>
+                        <button className="tab-button" onClick={mostrarPanelPagos}>
+                            Pagos
+                        </button>
+                    </div>
                     <button className="close-button" onClick={onClose}>
                         <i className="fas fa-times"></i>
                     </button>
@@ -534,6 +714,7 @@ function PedidosPanel({ onClose }) {
                                                         <th>Fecha</th>
                                                         <th>Total</th>
                                                         <th>Estado</th>
+                                                        <th>Estado Pago</th>
                                                         <th>Acciones</th>
                                                     </tr>
                                                 </thead>
@@ -547,6 +728,15 @@ function PedidosPanel({ onClose }) {
                                                             <td>
                                                                 <span className={`estado-badge ${getEstadoClass(pedido.estado)}`}>
                                                                     {pedido.estado || "Pendiente"}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className={`estado-badge ${getEstadoPagoClass(pedido.estadoPago)}`}>
+                                                                    {pedido.estadoPago === "verificado"
+                                                                        ? "Verificado"
+                                                                        : pedido.estadoPago === "rechazado"
+                                                                            ? "Rechazado"
+                                                                            : "Pendiente"}
                                                                 </span>
                                                             </td>
                                                             <td>
@@ -614,6 +804,14 @@ function PedidosPanel({ onClose }) {
                                                 <p>
                                                     <strong>Total:</strong> ${pedidoSeleccionado.total.toLocaleString("es-ES")}
                                                 </p>
+                                                <p>
+                                                    <strong>Método de pago:</strong> {formatMetodoPago(pedidoSeleccionado.metodo_pago)}
+                                                </p>
+                                                {pedidoSeleccionado.referencia_pago && (
+                                                    <p>
+                                                        <strong>Referencia de pago:</strong> {pedidoSeleccionado.referencia_pago}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
 
@@ -633,6 +831,83 @@ function PedidosPanel({ onClose }) {
                                                     <strong>Teléfono:</strong> {pedidoSeleccionado.telefono_contacto}
                                                 </p>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="detalles-seccion estado-pago-seccion">
+                                        <h3>Estado del Pago</h3>
+                                        <div className="actualizar-estado-form">
+                                            <select
+                                                value={estadoPagoSeleccionado}
+                                                onChange={(e) => setEstadoPagoSeleccionado(e.target.value)}
+                                                className="estado-select"
+                                            >
+                                                <option value="pendiente">Pendiente de verificación</option>
+                                                <option value="verificado">Pago verificado</option>
+                                                <option value="rechazado">Pago rechazado</option>
+                                            </select>
+                                            <button
+                                                className="actualizar-button"
+                                                onClick={actualizarEstadoPago}
+                                                disabled={actualizandoPago || estadoPagoSeleccionado === pedidoSeleccionado.estadoPago}
+                                            >
+                                                {actualizandoPago ? (
+                                                    <>
+                                                        <i className="fas fa-spinner fa-spin"></i> Actualizando...
+                                                    </>
+                                                ) : (
+                                                    "Actualizar estado del pago"
+                                                )}
+                                            </button>
+                                        </div>
+                                        <div className="estado-pago-info">
+                                            <p>
+                                                <strong>Estado actual:</strong>{" "}
+                                                <span className={`estado-badge ${getEstadoPagoClass(pedidoSeleccionado.estadoPago)}`}>
+                                                    {pedidoSeleccionado.estadoPago === "verificado"
+                                                        ? "Verificado"
+                                                        : pedidoSeleccionado.estadoPago === "rechazado"
+                                                            ? "Rechazado"
+                                                            : "Pendiente"}
+                                                </span>
+                                            </p>
+                                            <p className="estado-pago-descripcion">
+                                                {pedidoSeleccionado.estadoPago === "verificado"
+                                                    ? "El pago ha sido verificado y confirmado."
+                                                    : pedidoSeleccionado.estadoPago === "rechazado"
+                                                        ? "El pago ha sido rechazado. El cliente debe realizar un nuevo pago."
+                                                        : "El pago está pendiente de verificación."}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="detalles-seccion actualizar-estado">
+                                        <h3>Actualizar estado del pedido</h3>
+                                        <div className="actualizar-estado-form">
+                                            <select
+                                                value={estadoSeleccionado}
+                                                onChange={(e) => setEstadoSeleccionado(e.target.value)}
+                                                className="estado-select"
+                                            >
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="procesando">Procesando</option>
+                                                <option value="enviado">Enviado</option>
+                                                <option value="entregado">Entregado</option>
+                                                <option value="cancelado">Cancelado</option>
+                                            </select>
+                                            <button
+                                                className="actualizar-button"
+                                                onClick={actualizarEstadoPedido}
+                                                disabled={actualizandoEstado || estadoSeleccionado === pedidoSeleccionado.estado}
+                                            >
+                                                {actualizandoEstado ? (
+                                                    <>
+                                                        <i className="fas fa-spinner fa-spin"></i> Actualizando...
+                                                    </>
+                                                ) : (
+                                                    "Actualizar estado"
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
 
@@ -705,36 +980,6 @@ function PedidosPanel({ onClose }) {
                                                 )}
                                             </tbody>
                                         </table>
-                                    </div>
-
-                                    <div className="detalles-seccion actualizar-estado">
-                                        <h3>Actualizar estado</h3>
-                                        <div className="actualizar-estado-form">
-                                            <select
-                                                value={estadoSeleccionado}
-                                                onChange={(e) => setEstadoSeleccionado(e.target.value)}
-                                                className="estado-select"
-                                            >
-                                                <option value="pendiente">Pendiente</option>
-                                                <option value="procesando">Procesando</option>
-                                                <option value="enviado">Enviado</option>
-                                                <option value="entregado">Entregado</option>
-                                                <option value="cancelado">Cancelado</option>
-                                            </select>
-                                            <button
-                                                className="actualizar-button"
-                                                onClick={actualizarEstadoPedido}
-                                                disabled={actualizandoEstado || estadoSeleccionado === pedidoSeleccionado.estado}
-                                            >
-                                                {actualizandoEstado ? (
-                                                    <>
-                                                        <i className="fas fa-spinner fa-spin"></i> Actualizando...
-                                                    </>
-                                                ) : (
-                                                    "Actualizar estado"
-                                                )}
-                                            </button>
-                                        </div>
                                     </div>
 
                                     {pedidoSeleccionado.notas && (

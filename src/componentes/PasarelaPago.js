@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "../utils/supabase.ts"
 import "../hoja-de-estilos/PasarelaPago.css"
 
@@ -23,6 +23,11 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
     const [error, setError] = useState(null)
     const [cargando, setCargando] = useState(false)
     const [exito, setExito] = useState(false)
+    const [archivoComprobante, setArchivoComprobante] = useState(null)
+    const [previewComprobante, setPreviewComprobante] = useState(null)
+    const [comprobanteGuardado, setComprobanteGuardado] = useState(false)
+    const fileInputRef = useRef(null)
+    const downloadLinkRef = useRef(null)
 
     // Configuración de Nequi (podría venir de la base de datos)
     const [nequiConfig, setNequiConfig] = useState({
@@ -53,6 +58,15 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
         obtenerConfigNequi()
     }, [])
 
+    // Limpiar la vista previa cuando se desmonte el componente
+    useEffect(() => {
+        return () => {
+            if (previewComprobante) {
+                URL.revokeObjectURL(previewComprobante)
+            }
+        }
+    }, [previewComprobante])
+
     // Manejar cambios en los campos de envío
     const handleDatosEnvioChange = (e) => {
         const { name, value } = e.target
@@ -60,6 +74,69 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
             ...prev,
             [name]: value,
         }))
+    }
+
+    // Manejar cambio de archivo de comprobante
+    const handleComprobanteChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            setArchivoComprobante(file)
+            setComprobanteGuardado(false)
+
+            // Crear una vista previa para imágenes
+            if (file.type.startsWith("image/")) {
+                const fileUrl = URL.createObjectURL(file)
+                setPreviewComprobante(fileUrl)
+            } else {
+                setPreviewComprobante(null)
+            }
+        }
+    }
+
+    // Eliminar el comprobante seleccionado
+    const eliminarComprobante = () => {
+        setArchivoComprobante(null)
+        setPreviewComprobante(null)
+        setComprobanteGuardado(false)
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""
+        }
+    }
+
+    // Guardar comprobante localmente
+    const guardarComprobante = () => {
+        if (!archivoComprobante) {
+            setError("Por favor selecciona un archivo primero")
+            return
+        }
+
+        try {
+            // Crear un nombre de archivo con fecha y hora
+            const fecha = new Date().toISOString().replace(/[:.]/g, "-")
+            const nombreArchivo = `comprobante_${fecha}_${archivoComprobante.name}`
+
+            // Crear un enlace de descarga
+            const url = URL.createObjectURL(archivoComprobante)
+
+            // Crear un elemento de enlace para descargar
+            const a = document.createElement("a")
+            a.href = url
+            a.download = nombreArchivo
+            document.body.appendChild(a)
+            a.click()
+
+            // Limpiar
+            setTimeout(() => {
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+            }, 100)
+
+            setComprobanteGuardado(true)
+            setError(null)
+        } catch (err) {
+            console.error("Error al guardar el comprobante:", err)
+            setError("Error al guardar el comprobante: " + err.message)
+        }
     }
 
     // Validar datos de envío
@@ -146,6 +223,20 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
             // Validar datos según el método de pago
             if (metodoPago !== "contraentrega" && !referencia) {
                 setError("Por favor ingresa la referencia de la transacción")
+                setCargando(false)
+                return
+            }
+
+            // Validar comprobante para métodos que lo requieren
+            if ((metodoPago === "nequi" || metodoPago === "transferencia") && !archivoComprobante) {
+                setError("Por favor adjunta un comprobante de pago")
+                setCargando(false)
+                return
+            }
+
+            // Validar que el comprobante se haya guardado localmente
+            if ((metodoPago === "nequi" || metodoPago === "transferencia") && !comprobanteGuardado) {
+                setError("Por favor guarda el comprobante en tu dispositivo antes de continuar")
                 setCargando(false)
                 return
             }
@@ -274,6 +365,8 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                 notas: datosEnvio.notas || "",
                 fecha_pedido: new Date().toISOString(),
                 fecha_actualizacion: new Date().toISOString(),
+                metodo_pago: metodoPago, // Asegurarse de que el método de pago se guarde aquí
+                referencia_pago: referencia || "", // Guardar la referencia de pago
             }
 
             console.log("Datos del pedido a insertar:", pedidoData)
@@ -406,6 +499,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                         estado: "pendiente",
                         fecha: new Date().toISOString(),
                         monto: pedidoData.total,
+                        // No guardamos la URL del comprobante ya que se guarda localmente
                     },
                 ])
 
@@ -483,6 +577,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                 estado: "pendiente",
                 fecha: new Date().toISOString(),
                 monto: pedidoData.total,
+                // No incluimos la URL del comprobante ya que se guarda localmente
             }
 
             // Guardar el pedido en localStorage para referencia
@@ -730,6 +825,51 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                                     <small className="referencia-ayuda">Ingresa el número de referencia de tu transacción</small>
                                 )}
                             </div>
+
+                            {metodoPago !== "contraentrega" && (
+                                <div className="form-group comprobante-group">
+                                    <label htmlFor="comprobante">Comprobante de pago</label>
+                                    <div className="comprobante-upload">
+                                        <input
+                                            type="file"
+                                            id="comprobante"
+                                            ref={fileInputRef}
+                                            accept="image/*,.pdf"
+                                            onChange={handleComprobanteChange}
+                                            className="file-input"
+                                        />
+                                        <label htmlFor="comprobante" className="file-label">
+                                            <i className="fas fa-upload"></i> Seleccionar archivo
+                                        </label>
+                                        {archivoComprobante && (
+                                            <div className="file-info">
+                                                <span className="file-name">{archivoComprobante.name}</span>
+                                                <button type="button" className="btn-eliminar-archivo" onClick={eliminarComprobante}>
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {previewComprobante && (
+                                        <div className="comprobante-preview">
+                                            <img src={previewComprobante || "/placeholder.svg"} alt="Vista previa del comprobante" />
+                                        </div>
+                                    )}
+                                    {archivoComprobante && !comprobanteGuardado && (
+                                        <button type="button" className="btn-guardar-comprobante" onClick={guardarComprobante}>
+                                            <i className="fas fa-download"></i> Guardar comprobante en mi dispositivo
+                                        </button>
+                                    )}
+                                    {comprobanteGuardado && (
+                                        <div className="comprobante-guardado">
+                                            <i className="fas fa-check-circle"></i> Comprobante guardado correctamente
+                                        </div>
+                                    )}
+                                    <small className="comprobante-ayuda">
+                                        Adjunta una captura de pantalla o imagen del comprobante de pago y guárdalo en tu dispositivo
+                                    </small>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

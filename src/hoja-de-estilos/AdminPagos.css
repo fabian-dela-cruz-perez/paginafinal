@@ -1,46 +1,84 @@
-.admin-pagos-modal {
+.admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.admin-modal {
+    background-color: white;
+    border-radius: 8px;
     width: 90%;
     max-width: 1200px;
-    max-height: 85vh;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.admin-modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #333;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.close-button:hover {
+    color: #000;
+}
+
+.admin-modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
 }
 
 .admin-pagos-container {
-    padding: 0;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .filtros-pagos {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.filtros-pagos label {
-    font-weight: 500;
-    color: #555;
+    margin-bottom: 15px;
 }
 
 .filtros-pagos select {
-    padding: 8px 10px;
+    padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: white;
-    color: #333;
-    font-size: 0.9rem;
-    cursor: pointer;
 }
 
 .tabla-pagos {
-    background-color: white;
-    border-radius: 6px;
-    overflow: auto;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    max-height: 60vh;
+    overflow-x: auto;
 }
 
 .tabla-pagos table {
@@ -48,100 +86,98 @@
     border-collapse: collapse;
 }
 
-.tabla-pagos th {
-    padding: 12px 15px;
-    background-color: #f3f4f6;
-    text-align: left;
-    font-weight: 600;
-    color: #444;
-    border-bottom: 1px solid #ddd;
-    position: sticky;
-    top: 0;
-}
-
+.tabla-pagos th,
 .tabla-pagos td {
     padding: 12px 15px;
+    text-align: left;
     border-bottom: 1px solid #eee;
+}
+
+.tabla-pagos th {
+    background-color: #f8f9fa;
+    font-weight: 600;
     color: #333;
 }
 
-.tabla-pagos tr:last-child td {
-    border-bottom: none;
-}
-
 .tabla-pagos tr:hover {
-    background-color: #f9f9f9;
-}
-
-.metodo-nequi {
-    background-color: #f0f8ff;
-    color: #0066cc;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
+    background-color: #f5f5f5;
 }
 
 .badge-estado {
     display: inline-block;
     padding: 4px 8px;
-    border-radius: 12px;
+    border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 500;
 }
 
-.badge-estado.pendiente {
+.pendiente {
     background-color: #fff8e1;
-    color: #ffa000;
+    color: #f57c00;
 }
 
-.badge-estado.procesando {
+.procesando {
     background-color: #e3f2fd;
     color: #1976d2;
 }
 
-.badge-estado.completado {
+.completado,
+.verificado {
     background-color: #e8f5e9;
     color: #388e3c;
 }
 
-.badge-estado.fallido {
+.entregado {
+    background-color: #e8f5e9;
+    color: #388e3c;
+    font-weight: 600;
+}
+
+.cancelado,
+.rechazado {
     background-color: #ffebee;
     color: #d32f2f;
 }
 
-.acciones-comprobante {
+.acciones-comprobante,
+.acciones-pago {
     display: flex;
     gap: 5px;
 }
 
 .btn-comprobante,
-.btn-ver-comprobante {
-    padding: 6px 10px;
-    background-color: #f3f4f6;
-    border: 1px solid #ddd;
+.btn-ver-comprobante,
+.btn-ver-pedido {
+    padding: 5px 8px;
+    border: none;
     border-radius: 4px;
-    color: #555;
-    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.btn-comprobante:hover:not(:disabled),
-.btn-ver-comprobante:hover:not(:disabled) {
-    background-color: #e2e4e6;
+.btn-comprobante {
+    background-color: #e3f2fd;
+    color: #1976d2;
 }
 
 .btn-ver-comprobante {
-    background-color: #ff5636;
-    color: white;
-    border: none;
+    background-color: #e8f5e9;
+    color: #388e3c;
 }
 
-.btn-ver-comprobante:hover:not(:disabled) {
-    background-color: #e04a4a;
+.btn-ver-pedido {
+    background-color: #f5f5f5;
+    color: #333;
+    padding: 5px 10px;
+}
+
+.btn-comprobante:hover,
+.btn-ver-comprobante:hover,
+.btn-ver-pedido:hover {
+    opacity: 0.8;
 }
 
 .btn-comprobante:disabled,
@@ -150,70 +186,605 @@
     cursor: not-allowed;
 }
 
-.acciones-pago {
-    display: flex;
-    gap: 8px;
+.btn-ver-pedido i {
+    margin-right: 5px;
 }
 
-.select-estado {
-    padding: 6px;
-    border: 1px solid #ddd;
+.error-container {
+    padding: 15px;
+    background-color: #ffebee;
+    color: #d32f2f;
     border-radius: 4px;
-    background-color: white;
-    color: #333;
-    font-size: 0.85rem;
+    margin-bottom: 15px;
 }
 
 .cargando-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
+    padding: 40px;
+    color: #666;
+}
+
+.cargando-container i {
+    margin-right: 10px;
+}
+
+.no-resultados {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .admin-modal {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .tabla-pagos th:nth-child(4),
+    .tabla-pagos td:nth-child(4),
+    .tabla-pagos th:nth-child(6),
+    .tabla-pagos td:nth-child(6) {
+        display: none;
+    }
+}
+
+/* Estilos para el panel de administración de pagos */
+.admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.admin-modal {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.admin-pagos-modal {
+    height: 90vh;
+}
+
+.admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+}
+
+.admin-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.panel-tabs {
+    display: flex;
+    gap: 10px;
+    margin-left: 20px;
+}
+
+.tab-button {
+    padding: 8px 16px;
+    border: none;
+    background-color: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tab-button:hover {
+    background-color: #f0f0f0;
+}
+
+.tab-button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.close-button:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.admin-modal-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.admin-pagos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.filtros-pagos {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.filtros-pagos label {
+    font-weight: 500;
+    color: #555;
+}
+
+.filtros-pagos select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    min-width: 150px;
+}
+
+.error-container {
+    background-color: #fff3f3;
+    border: 1px solid #ffcccb;
+    color: #d32f2f;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.cargando-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
     color: #666;
     font-size: 1.1rem;
     gap: 10px;
 }
 
-.error-container {
-    background-color: #ffebee;
-    color: #d32f2f;
-    padding: 15px;
-    border-radius: 6px;
-    margin: 20px 0;
-    text-align: center;
-}
-
 .no-resultados {
-    background-color: #f5f5f5;
-    color: #666;
-    padding: 25px;
-    border-radius: 6px;
     text-align: center;
-    margin: 20px 0;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
 }
 
-/* Estilos para el botón de pagos en la navegación */
-.pagos-button {
-    background-color: #ff5636;
+.tabla-pagos {
+    overflow-x: auto;
+}
+
+.tabla-pagos table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e0e0e0;
+}
+
+.tabla-pagos th {
+    background-color: #f8f9fa;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.tabla-pagos td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+}
+
+.tabla-pagos tr:hover {
+    background-color: #f5f5f5;
+}
+
+.badge-estado {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.pendiente {
+    background-color: #fff8e1;
+    color: #ff8f00;
+}
+
+.verificado {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.rechazado {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.procesando {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.completado,
+.entregado {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.cancelado {
+    background-color: #f5f5f5;
+    color: #616161;
+}
+
+.metodo-nequi {
+    color: #7b1fa2;
+    font-weight: 500;
+}
+
+.metodo-transferencia {
+    color: #0277bd;
+    font-weight: 500;
+}
+
+.acciones-comprobante {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-comprobante,
+.btn-ver-comprobante,
+.btn-ver-pedido,
+.btn-editar-pago {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-comprobante {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.btn-comprobante:hover {
+    background-color: #bbdefb;
+}
+
+.btn-ver-comprobante {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.btn-ver-comprobante:hover {
+    background-color: #c8e6c9;
+}
+
+.btn-ver-pedido {
+    background-color: #f5f5f5;
+    color: #424242;
+}
+
+.btn-ver-pedido:hover {
+    background-color: #e0e0e0;
+}
+
+.btn-editar-pago {
+    background-color: #fff8e1;
+    color: #ff8f00;
+}
+
+.btn-editar-pago:hover {
+    background-color: #ffecb3;
+}
+
+.acciones-pago {
+    display: flex;
+    gap: 8px;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Estilos para detalles del pago */
+.pago-detalles {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.detalles-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.volver-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #333;
+    transition: background-color 0.2s;
+}
+
+.volver-button:hover {
+    background-color: #e0e0e0;
+}
+
+.detalles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.detalles-seccion {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.detalles-seccion h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.detalles-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detalles-info p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.estado-pago-seccion {
+    background-color: #f9f9f9;
+}
+
+.actualizar-estado-form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.estado-select {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.actualizar-button {
+    padding: 10px 16px;
+    background-color: #007bff;
     color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.pagos-button:hover {
-    background-color: #e04a4a;
+.actualizar-button:hover {
+    background-color: #0069d9;
 }
 
-@media (max-width: 768px) {
-    .tabla-pagos {
-        overflow-x: auto;
-    }
+.estado-pago-info {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
 
-    .acciones-pago {
-        flex-direction: column;
-        gap: 5px;
-    }
+.estado-pago-descripcion {
+    margin-top: 8px;
+    font-style: italic;
+    color: #666;
+}
 
-    .filtros-pagos {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+.comprobante-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.comprobante-imagen {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.comprobante-acciones {
+    display: flex;
+    gap: 12px;
+}
+
+.acciones-container {
+    display: flex;
+    gap: 12px;
+}
+
+/* Añadir estilos para la sección de subir comprobante */
+.subir-comprobante {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.file-label:hover {
+    background-color: #bbdefb;
+}
+
+.file-name {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #666;
+    word-break: break-all;
+}
+
+.btn-subir-comprobante {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+}
+
+.btn-subir-comprobante:hover {
+    background-color: #43a047;
+}
+
+.btn-subir-comprobante:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.no-comprobante {
+    color: #999;
+    font-style: italic;
+}
+
+/* Estilos para la sección de comprobante en PasarelaPago.css */
+.comprobante-group {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.comprobante-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.btn-eliminar-archivo {
+    background: none;
+    border: none;
+    color: #f44336;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.comprobante-preview {
+    margin-top: 15px;
+    max-width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.comprobante-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    display: block;
+}
+
+.comprobante-ayuda {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-size: 0.85rem;
 }
