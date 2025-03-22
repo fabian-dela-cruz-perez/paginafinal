@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "../utils/supabase.ts"
 import "../hoja-de-estilos/AdminPagos.css"
 
-function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pedidos }) {
+function AdminPagos({ onClose, volverAPedidos, actualizarPedidos, pedidos }) {
     const [pagos, setPagos] = useState([])
     const [cargando, setCargando] = useState(true)
     const [error, setError] = useState(null)
@@ -12,8 +12,6 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
     const [pagoSeleccionado, setPagoSeleccionado] = useState(null)
     const [estadoPagoSeleccionado, setEstadoPagoSeleccionado] = useState("")
     const [actualizandoPago, setActualizandoPago] = useState(false)
-    const [archivoComprobante, setArchivoComprobante] = useState(null)
-    const [subiendoComprobante, setSubiendoComprobante] = useState(false)
 
     // Cargar pagos
     useEffect(() => {
@@ -25,15 +23,16 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
                 const { data: datosPagos, error: errorPagos } = await supabase
                     .from("pagos")
                     .select(`
-                      id,
-                      pedido_id,
-                      metodo,
-                      referencia,
-                      estado,
-                      fecha,
-                      monto,
-                      comprobante_verificado
-                  `)
+              id,
+              pedido_id,
+              metodo,
+              referencia,
+              estado,
+              fecha,
+              monto,
+              comprobante_verificado,
+              comprobante_url
+          `)
                     .order("fecha", { ascending: false })
 
                 if (errorPagos) {
@@ -47,17 +46,17 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
                         const { data: pedidoData, error: pedidoError } = await supabase
                             .from("pedidos")
                             .select(`
-                              id,
-                              usuario_id,
-                              estado,
-                              total,
-                              usuarios:usuario_id (
-                                  id,
-                                  nombre,
-                                  email,
-                                  apellido
-                              )
-                          `)
+                      id,
+                      usuario_id,
+                      estado,
+                      total,
+                      usuarios:usuario_id (
+                          id,
+                          nombre,
+                          email,
+                          apellido
+                      )
+                  `)
                             .eq("id", pago.pedido_id)
                             .single()
 
@@ -80,6 +79,7 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
                             total: pago.monto || pedidoData?.total || 0,
                             usuario: pedidoData?.usuarios || { nombre: "Usuario desconocido", email: "N/A" },
                             pedidoCompleto: pedidoData,
+                            comprobanteUrl: pago.comprobante_url || null,
                         }
                     }),
                 )
@@ -111,49 +111,6 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
                     return pago.estado.toLowerCase() === filtro.toLowerCase()
                 }
             })
-
-    // Manejar cambio de archivo
-    const handleArchivoChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setArchivoComprobante(e.target.files[0])
-        }
-    }
-
-    // Guardar comprobante localmente
-    const guardarComprobante = () => {
-        if (!archivoComprobante) {
-            alert("Por favor selecciona un archivo primero")
-            return
-        }
-
-        try {
-            // Crear un nombre de archivo con fecha y hora
-            const fecha = new Date().toISOString().replace(/[:.]/g, "-")
-            const nombreArchivo = `comprobante_${fecha}_${archivoComprobante.name}`
-
-            // Crear un enlace de descarga
-            const url = URL.createObjectURL(archivoComprobante)
-
-            // Crear un elemento de enlace para descargar
-            const a = document.createElement("a")
-            a.href = url
-            a.download = nombreArchivo
-            document.body.appendChild(a)
-            a.click()
-
-            // Limpiar
-            setTimeout(() => {
-                document.body.removeChild(a)
-                URL.revokeObjectURL(url)
-            }, 100)
-
-            alert("Comprobante guardado correctamente en tu dispositivo")
-            setArchivoComprobante(null)
-        } catch (error) {
-            console.error("Error al guardar el comprobante:", error)
-            alert("Error al guardar el comprobante: " + error.message)
-        }
-    }
 
     // Ver detalles del pedido
     const verDetallesPedido = (pedidoId) => {
@@ -195,14 +152,12 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
     const seleccionarPago = (pago) => {
         setPagoSeleccionado(pago)
         setEstadoPagoSeleccionado(pago.estadoPago)
-        setArchivoComprobante(null)
     }
 
     // Cerrar detalles del pago
     const cerrarDetallesPago = () => {
         setPagoSeleccionado(null)
         setEstadoPagoSeleccionado("")
-        setArchivoComprobante(null)
     }
 
     // Actualizar estado del pago
@@ -467,35 +422,87 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
                                 <div className="detalles-seccion">
                                     <h3>Comprobante de Pago</h3>
                                     <div className="subir-comprobante">
-                                        <p>Puedes subir un comprobante de pago para este pedido.</p>
-                                        <div className="upload-container">
-                                            <input
-                                                type="file"
-                                                id="comprobante"
-                                                accept="image/*,.pdf"
-                                                onChange={handleArchivoChange}
-                                                className="file-input"
-                                            />
-                                            <label htmlFor="comprobante" className="file-label">
-                                                <i className="fas fa-upload"></i> Seleccionar archivo
-                                            </label>
-                                            {archivoComprobante && <span className="file-name">{archivoComprobante.name}</span>}
-                                        </div>
-                                        <button
-                                            className="btn-subir-comprobante"
-                                            onClick={guardarComprobante}
-                                            disabled={!archivoComprobante || subiendoComprobante}
-                                        >
-                                            {subiendoComprobante ? (
-                                                <>
-                                                    <i className="fas fa-spinner fa-spin"></i> Guardando...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="fas fa-download"></i> Guardar comprobante en mi dispositivo
-                                                </>
-                                            )}
-                                        </button>
+                                        <p>Comprobante de pago subido por el cliente. Puedes descargarlo para verificarlo.</p>
+                                        {pagoSeleccionado.comprobanteUrl ? (
+                                            <div className="comprobante-info">
+                                                <span className="comprobante-nombre">Comprobante disponible</span>
+                                                <button
+                                                    className="btn-descargar-comprobante"
+                                                    onClick={() => {
+                                                        // Si la URL comienza con data:, es un base64 y podemos abrirlo directamente
+                                                        if (
+                                                            pagoSeleccionado.comprobanteUrl &&
+                                                            pagoSeleccionado.comprobanteUrl.startsWith("data:")
+                                                        ) {
+                                                            const nuevaVentana = window.open()
+                                                            nuevaVentana.document.write(`
+                                <html>
+                                  <head>
+                                    <title>Comprobante de Pago</title>
+                                    <style>
+                                      body { 
+                                        margin: 0; 
+                                        display: flex; 
+                                        justify-content: center; 
+                                        align-items: center; 
+                                        height: 100vh; 
+                                        background-color: #f5f5f5;
+                                      }
+                                      img { 
+                                        max-width: 90%; 
+                                        max-height: 90vh; 
+                                        box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+                                      }
+                                      .container {
+                                        text-align: center;
+                                      }
+                                      h2 {
+                                        font-family: Arial, sans-serif;
+                                        color: #333;
+                                      }
+                                      .download-btn {
+                                        margin-top: 15px;
+                                        padding: 8px 16px;
+                                        background-color: #4CAF50;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        cursor: pointer;
+                                        font-size: 14px;
+                                      }
+                                      .download-btn:hover {
+                                        background-color: #45a049;
+                                      }
+                                    </style>
+                                  </head>
+                                  <body>
+                                    <div class="container">
+                                      <h2>Comprobante de Pago</h2>
+                                      <img src="${pagoSeleccionado.comprobanteUrl}" alt="Comprobante de pago" />
+                                      <div>
+                                        <a href="${pagoSeleccionado.comprobanteUrl}" download="comprobante_pago.png">
+                                          <button class="download-btn">Descargar Comprobante</button>
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </body>
+                                </html>
+                              `)
+                                                            nuevaVentana.document.close()
+                                                        } else {
+                                                            // Si no es base64, intentar abrir como URL normal
+                                                            window.open(pagoSeleccionado.comprobanteUrl, "_blank")
+                                                        }
+                                                    }}
+                                                >
+                                                    <i className="fas fa-external-link-alt"></i> Ver comprobante
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="no-comprobante">
+                                                <i className="fas fa-exclamation-circle"></i> El cliente no ha subido un comprobante
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -516,5 +523,5 @@ function AdminPagosSimplificado({ onClose, volverAPedidos, actualizarPedidos, pe
     )
 }
 
-export default AdminPagosSimplificado
+export default AdminPagos
 

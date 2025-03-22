@@ -16,6 +16,7 @@ function AdminProductos({ onClose, onProductoAgregado }) {
     const [categorias, setCategorias] = useState([])
 
     // Modificar el estado formData para usar imagenes en lugar de imagen
+    // Cambiado colorUnico a color_unico para coincidir con la base de datos
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
@@ -24,6 +25,7 @@ function AdminProductos({ onClose, onProductoAgregado }) {
         imagenes: [], // Ahora solo usamos imagenes (sin imagen separada)
         tallas_disponibles: [], // Cambiado a array
         colores_disponibles: [], // Cambiado a array
+        color_unico: "", // Cambiado a color_unico para coincidir con la base de datos
         activo: true, // Añadir esta propiedad
     })
 
@@ -166,6 +168,7 @@ function AdminProductos({ onClose, onProductoAgregado }) {
             imagenes: [],
             tallas_disponibles: [],
             colores_disponibles: [],
+            color_unico: "", // Cambiado a color_unico
             activo: true,
         })
         setModoEdicion(false)
@@ -283,6 +286,7 @@ function AdminProductos({ onClose, onProductoAgregado }) {
             imagenes: Array.isArray(producto.imagenes) ? producto.imagenes : [],
             tallas_disponibles: Array.isArray(producto.tallas_disponibles) ? producto.tallas_disponibles : [],
             colores_disponibles: Array.isArray(producto.colores_disponibles) ? producto.colores_disponibles : [],
+            color_unico: producto.color_unico || "", // Cambiado a color_unico
             activo: producto.activo !== false, // Si no está definido, asumimos true
         })
 
@@ -292,16 +296,31 @@ function AdminProductos({ onClose, onProductoAgregado }) {
     const eliminarProducto = async (id) => {
         if (window.confirm("¿Estás seguro de que deseas eliminar este producto?")) {
             try {
+                console.log("Intentando eliminar producto con ID:", id)
+
+                // Verificar que el ID sea válido
+                if (!id) {
+                    throw new Error("ID de producto no válido")
+                }
+
                 // Eliminar producto de Supabase
                 const { error } = await supabase.from("productos").delete().eq("id", id)
 
-                if (error) throw error
+                if (error) {
+                    console.error("Error de Supabase al eliminar:", error)
+                    throw error
+                }
+
+                console.log("Producto eliminado correctamente")
 
                 // Actualizar estado local
                 setProductos(productos.filter((p) => p.id !== id))
+
+                // Mostrar mensaje de éxito
+                alert("Producto eliminado correctamente")
             } catch (error) {
-                console.error("Error al eliminar producto:", error)
-                alert("Error al eliminar el producto. Por favor, intenta de nuevo.")
+                console.error("Error detallado al eliminar producto:", error)
+                alert(`Error al eliminar el producto: ${error.message || "Error desconocido"}. Por favor, intenta de nuevo.`)
             }
         }
     }
@@ -546,6 +565,22 @@ function AdminProductos({ onClose, onProductoAgregado }) {
                                             </button>
                                         ))}
                                     </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="color_unico">Color Único (opcional)</label>
+                                    <input
+                                        type="text"
+                                        id="color_unico"
+                                        name="color_unico"
+                                        value={formData.color_unico || ""}
+                                        onChange={handleInputChange}
+                                        placeholder="Dejar vacío si el producto tiene múltiples colores"
+                                    />
+                                    <small className="form-help-text">
+                                        Si el producto solo viene en un color específico, escríbelo aquí. Esto desactivará la selección de
+                                        colores.
+                                    </small>
                                 </div>
 
                                 <div className="form-group">

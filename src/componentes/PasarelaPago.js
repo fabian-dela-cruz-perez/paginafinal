@@ -139,6 +139,16 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
         }
     }
 
+    // Función para convertir archivo a base64
+    const convertirArchivoABase64 = (archivo) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.readAsDataURL(archivo)
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = (error) => reject(error)
+        })
+    }
+
     // Validar datos de envío
     const validarDatosEnvio = () => {
         if (!datosEnvio.direccion || !datosEnvio.ciudad || !datosEnvio.telefono) {
@@ -230,13 +240,6 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
             // Validar comprobante para métodos que lo requieren
             if ((metodoPago === "nequi" || metodoPago === "transferencia") && !archivoComprobante) {
                 setError("Por favor adjunta un comprobante de pago")
-                setCargando(false)
-                return
-            }
-
-            // Validar que el comprobante se haya guardado localmente
-            if ((metodoPago === "nequi" || metodoPago === "transferencia") && !comprobanteGuardado) {
-                setError("Por favor guarda el comprobante en tu dispositivo antes de continuar")
                 setCargando(false)
                 return
             }
@@ -499,7 +502,8 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                         estado: "pendiente",
                         fecha: new Date().toISOString(),
                         monto: pedidoData.total,
-                        // No guardamos la URL del comprobante ya que se guarda localmente
+                        // Guardar el comprobante como base64 string
+                        comprobante_url: archivoComprobante ? await convertirArchivoABase64(archivoComprobante) : null,
                     },
                 ])
 
@@ -531,6 +535,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                             throw new Error("No se pudo crear la tabla de pagos")
                         }
 
+                        // También modificar el reintento de inserción en caso de error
                         // Reintentar la inserción
                         const { error: reinsertError } = await supabase.from("pagos").insert([
                             {
@@ -540,6 +545,8 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                                 estado: "pendiente",
                                 fecha: new Date().toISOString(),
                                 monto: pedidoData.total,
+                                // Guardar el comprobante como base64 string
+                                comprobante_url: archivoComprobante ? await convertirArchivoABase64(archivoComprobante) : null,
                             },
                         ])
 
@@ -866,7 +873,7 @@ function PasarelaPago({ total, onClose, onPagoCompletado, direccionEnvio }) {
                                         </div>
                                     )}
                                     <small className="comprobante-ayuda">
-                                        Adjunta una captura de pantalla o imagen del comprobante de pago y guárdalo en tu dispositivo
+                                        Adjunta una captura de pantalla o imagen del comprobante de pago
                                     </small>
                                 </div>
                             )}

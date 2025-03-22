@@ -116,7 +116,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
   }
 
   // Obtener la talla seleccionada de un producto
-  const getTalla = (id, producto) => {
+  const getTallaInterna = (id, producto) => {
     // Si el producto tiene tallas disponibles, usar esas
     if (producto && producto.tallas_disponibles && producto.tallas_disponibles.length > 0) {
       return tallasSeleccionadas[id] || producto.tallas_disponibles[0]
@@ -126,19 +126,18 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
 
   // Función para determinar si mostrar selector de color
   const mostrarSelectorColor = (categoria, producto) => {
+    // Si el producto tiene un color único definido, no mostrar selector
+    if (producto && producto.color_unico) {
+      return false
+    }
+
     // Si el producto tiene colores disponibles, siempre mostrar selector
     if (producto && producto.colores_disponibles && producto.colores_disponibles.length > 0) {
       return true
     }
 
     // Categorías que no necesitan selector de color
-    const categoriasColorUnico = ["Accesorios", "Gorras",]
-
-    // Verificar si es un conjunto de color único
-    if (categoria === "Conjuntos" && producto && producto.colorUnico) {
-      return false
-    }
-
+    const categoriasColorUnico = ["Accesorios", "Gorras"]
     return !categoriasColorUnico.includes(categoria)
   }
 
@@ -162,8 +161,8 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
     }
 
     // Si es un conjunto con color único, usar ese color
-    if (categoria === "Conjuntos" && producto && producto.colorUnico) {
-      return producto.colorUnico
+    if (categoria === "Conjuntos" && producto && producto.color_unico) {
+      return producto.color_unico
     }
 
     switch (categoria) {
@@ -296,13 +295,13 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
           nuevasImagenes[index] = { url: producto.imagenes[0], index: 0 }
         }
 
-        // Establecer color predeterminado
-        if (producto.colores_disponibles && producto.colores_disponibles.length > 0 && !nuevosColores[index]) {
-          nuevosColores[index] = producto.colores_disponibles[0]
+        // Si el producto tiene color único, no establecer color seleccionado
+        if (producto.color_unico) {
+          // No hacer nada, se usará el color único
         }
-        // Si es un conjunto con color único, establecer ese color
-        else if (producto.categoria === "Conjuntos" && producto.colorUnico) {
-          nuevosColores[index] = producto.colorUnico
+        // Establecer color predeterminado
+        else if (producto.colores_disponibles && producto.colores_disponibles.length > 0 && !nuevosColores[index]) {
+          nuevosColores[index] = producto.colores_disponibles[0]
         }
         // Para otras categorías que no muestran selector de color
         else if (!mostrarSelectorColor(producto.categoria, producto) && !nuevosColores[index]) {
@@ -326,25 +325,20 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
 
   // Manejar el agregar al carrito con color y talla
   const handleAgregarAlCarrito = (producto, index) => {
-    let color = getColor(index, producto)
-    let talla = getTalla(index, producto)
+    // Si el producto tiene un color único definido, usarlo
+    let color = producto.color_unico || getColor(index, producto)
+    let talla = getTallaInterna(index, producto)
     const cantidad = getCantidad(index)
 
-    // Para conjuntos de color único, usar ese color
-    if (producto.categoria === "Conjuntos" && producto.colorUnico) {
-      color = producto.colorUnico
-    }
     // Para productos específicos, establecer valores predeterminados
-    else if (!mostrarSelectorColor(producto.categoria, producto)) {
+    if (!producto.color_unico && !mostrarSelectorColor(producto.categoria, producto)) {
       color = color || getColorPredeterminado(producto.categoria, producto)
     }
 
-    if (!mostrarSelectorTalla(producto.categoria, producto)) {
-      talla = talla || getTallaPredeterminada(producto.categoria, producto)
-    }
+    talla = talla || getTallaPredeterminada(producto.categoria, producto)
 
     // Validar solo si es necesario para este tipo de producto
-    if (mostrarSelectorColor(producto.categoria, producto) && !color) {
+    if (!producto.color_unico && mostrarSelectorColor(producto.categoria, producto) && !color) {
       alert("Por favor selecciona un color")
       return
     }
@@ -424,10 +418,10 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
             <p className="product-price">{producto.precio}</p>
 
             {/* Selector de color - condicional según categoría y tipo de producto */}
-            {producto.categoria === "Conjuntos" && producto.colorUnico ? (
+            {producto.color_unico ? (
               <div className="selector-container">
                 <label className="selector-label">Color:</label>
-                <div className="color-unico">{producto.colorUnico}</div>
+                <div className="color-unico">{producto.color_unico}</div>
               </div>
             ) : mostrarSelectorColor(producto.categoria, producto) ? (
               <div className="selector-container">
@@ -463,7 +457,7 @@ function Productos({ productos, searchTerm, categoriaSeleccionada, onAgregarAlCa
                 <select
                   id={`talla-${index}`}
                   className="selector-input"
-                  value={getTalla(index, producto)}
+                  value={getTallaInterna(index, producto)}
                   onChange={(e) => actualizarTalla(index, e.target.value)}
                 >
                   {getOpcionesTallas(producto.categoria, producto).map((opcion) => (

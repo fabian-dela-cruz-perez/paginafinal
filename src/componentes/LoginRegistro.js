@@ -7,8 +7,8 @@ import "../hoja-de-estilos/LoginRegistro.css"
 function Login({ onClose }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [nombre, setNombre] = useState("") // New state for first name
-  const [apellido, setApellido] = useState("") // New state for last name
+  const [nombre, setNombre] = useState("")
+  const [apellido, setApellido] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [isLogin, setIsLogin] = useState(true)
@@ -197,21 +197,6 @@ function Login({ onClose }) {
               )}
             </button>
           </form>
-
-          <div className="social-login">
-            <p>O continúa con</p>
-            <div className="social-buttons">
-              <button className="social-button google">
-                <i className="fab fa-google"></i>
-              </button>
-              <button className="social-button facebook">
-                <i className="fab fa-facebook-f"></i>
-              </button>
-              <button className="social-button apple">
-                <i className="fab fa-apple"></i>
-              </button>
-            </div>
-          </div>
 
           <div className="form-footer">
             {isLogin ? (
